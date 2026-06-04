@@ -89,12 +89,17 @@ function generateMaze(width: number, height: number, braid: number = 0): boolean
   return maze;
 }
 
-function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], cellSize: number, theme: string) {
+function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: string) {
   const ctx = canvas.getContext('2d', { alpha: true });
   if (!ctx) return;
 
   const gridH = maze.length;
   const gridW = maze[0].length;
+
+  // Compute cell size from the actual generated maze grid (logical size = (grid-1)/2 )
+  const logicalW = (gridW - 1) / 2;
+  const logicalH = (gridH - 1) / 2;
+  const cellSize = Math.min(28, Math.floor(520 / Math.max(logicalW, logicalH)));
 
   canvas.width = gridW * cellSize;
   canvas.height = gridH * cellSize;
@@ -172,10 +177,9 @@ export default function PaperAirplanePWA() {
 
   useEffect(() => {
     if (maze && canvasRef.current) {
-      const cell = Math.min(28, Math.floor(520 / Math.max(width, height)));
-      drawMazeOnCanvas(canvasRef.current, maze, cell, theme);
+      drawMazeOnCanvas(canvasRef.current, maze, theme);
     }
-  }, [maze, theme, width, height]);
+  }, [maze, theme]);
 
   const exportPDF = () => {
     if (!maze || !canvasRef.current) return;
@@ -206,11 +210,11 @@ export default function PaperAirplanePWA() {
     pdf.save(`paperairplane-maze-${theme}-${width}x${height}.pdf`);
   };
 
-  // Initial generate on load
+  // Auto-regenerate maze when size or difficulty params change (fixes slider/maze sync issue).
+  // The "Regenerate" button still allows re-randomizing the same params.
   useEffect(() => {
-    if (!maze) generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    generate();
+  }, [width, height, braid]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
