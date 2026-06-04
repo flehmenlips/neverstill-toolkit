@@ -95,7 +95,8 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
   const logicalH = (gridH - 1) / 2;
   const cellSize = Math.min(28, Math.floor(520 / Math.max(logicalW, logicalH)));
 
-  canvas.width = gridW * cellSize;
+  const decoWidth = (theme !== 'classic') ? 45 : 0; // reserve space for theme decoration on the right
+  canvas.width = gridW * cellSize + decoWidth;
   canvas.height = gridH * cellSize;
 
   ctx.fillStyle = '#111827'; // dark bg
@@ -146,13 +147,14 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
   ctx.fillStyle = '#111827';
   ctx.fillText('FIN', endX, endY);
 
-  // Theme decoration (simple)
+  // Theme decoration (simple) - placed in reserved right margin to avoid overlap with maze
   if (theme !== 'classic') {
+    const decoX = gridW * cellSize + 5;
     ctx.fillStyle = theme === 'dinosaurs' ? '#86efac' : theme === 'farm' ? '#fde047' : '#bae6fd';
-    ctx.fillRect(canvas.width - 50, 10, 35, 35);
+    ctx.fillRect(decoX, 10, 35, 35);
     ctx.fillStyle = '#111827';
     ctx.font = '10px sans-serif';
-    ctx.fillText(theme.slice(0, 3).toUpperCase(), canvas.width - 32, 28);
+    ctx.fillText(theme.slice(0, 3).toUpperCase(), decoX + 18, 28);
   }
 }
 
@@ -193,14 +195,23 @@ export default function PaperAirplanePWA() {
 
     // Embed canvas as image (simple for spike; full vector port would redraw paths)
     const imgData = canvasRef.current.toDataURL('image/png');
-    const imgWidth = 160; // mm
-    const imgHeight = (canvasRef.current.height / canvasRef.current.width) * imgWidth;
+    let imgWidth = 160; // mm target max
+    let imgHeight = (canvasRef.current.height / canvasRef.current.width) * imgWidth;
+
+    // Scale to fit page (title at ~30mm + instructions + margins + footer space)
+    const maxImgHeight = pageHeight - 60; // leave room for header/footer
+    if (imgHeight > maxImgHeight) {
+      const scale = maxImgHeight / imgHeight;
+      imgHeight = maxImgHeight;
+      imgWidth = imgWidth * scale;
+    }
     const x = (pageWidth - imgWidth) / 2;
     pdf.addImage(imgData, 'PNG', x, 35, imgWidth, imgHeight);
 
-    // Footer
+    // Footer - positioned safely below image
+    const footerY = Math.max(pageHeight - 15, 35 + imgHeight + 10);
     pdf.setFontSize(8);
-    pdf.text('Generated in the Neverstill Toolkit PWA (PA-005 spike). Full parity with Python version coming.', 20, pageHeight - 15);
+    pdf.text('Generated in the Neverstill Toolkit PWA (PA-005 spike). Full parity with Python version coming.', 20, footerY);
 
     pdf.save(`paperairplane-maze-${theme}-${width}x${height}.pdf`);
   };
