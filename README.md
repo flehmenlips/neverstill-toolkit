@@ -4,7 +4,7 @@ Central site for the Neverstill Operator Toolkit ("Tools built by a farmer-chef 
 
 PaperAirplane is the first live public tool (worksheets + digital packs). FarmForge forecasting, PrepBoard, ChefScale etc. to follow or be added as they are productized.
 
-See the full plan and PaperAirplane MVP details in the conversation / project notes.
+See the full plan, PWA migration (PA-005), and PaperAirplane MVP details in the sibling PaperAirplane repo (docs/PWA_MIGRATION_AND_IMPROVEMENT_PLAN.md) and the parallel PA-005 work happening in both repos by separate agents/workflows.
 
 ## Getting Started (dev)
 ```bash
@@ -21,9 +21,12 @@ Open http://localhost:3000
 ## Deployment
 Vercel is ideal. Set STRIPE_* env vars (copy .env.example).
 
-For the PaperAirplane generator web UI itself (the Python/Streamlit piece):
-- Easy hosted demo on Render: Web Service, build `pip install -e ".[web]"`, start command the streamlit one with $PORT.
-- Link from the hub "Try hosted (Pro)" section.
+This repo is now at https://github.com/flehmenlips/neverstill-toolkit (pushed as part of starting the parallel PA-005 workflow).
+
+For the PaperAirplane side:
+- PWA is now the primary hosted experience (see /tools/paperairplane/pwa in this hub for the current spike/demo).
+- Python version (local + packs) remains in the sibling PaperAirplane repo.
+- The "hosted demo" link in the hub now points to the live PWA demo (no Streamlit needed for basic use).
 
 ## Monetization paths used here
 - Gumroad: fastest for digital PDF packs + "Pro generator license" (create the product, upload zips or fulfillment instructions, use their license keys).
@@ -31,13 +34,15 @@ For the PaperAirplane generator web UI itself (the Python/Streamlit piece):
 - Hybrid: Sell packs on Gumroad today for immediate revenue; use this hub + Stripe for the "app access" upsell and future recurring.
 
 ## Next concrete steps (PaperAirplane + hub)
-1. In PaperAirplane: run `paperairplane batch examples/farm-week-pack.yaml --zip` (and a few more themes) to create real sellable bundles.
-2. Create Gumroad store/products, upload the zips + link the generator GitHub + this hub.
-3. In this hub: replace the placeholder price_ IDs and gumroad links with real ones. Add real STRIPE_SECRET etc in env on deploy.
-4. Deploy the hub (Vercel).
-5. (Optional quick win) Deploy a public Streamlit instance of PaperAirplane web for the "hosted demo" link (limit it or protect lightly for MVP).
-6. Generate more content / stories on the farm sites and link here for SEO flywheel.
-7. Add the other tools as their artifacts are ready (the farm-pnl HTML can live at a static path or separate Render static site and be linked).
+1. In PaperAirplane repo (separate agent): continue PA-005 generator port (Pyodide/native web, writing vectors, fidelity).
+2. In this toolkit repo: this branch (feat/PA-005-toolkit-pwa-spike) adds the PWA demo page + hub updates. Create PR, merge, deploy to Vercel.
+3. Create real Gumroad + Stripe products/links (replace placeholders).
+4. Deploy hub to Vercel with real env.
+5. Update PaperAirplane tool page and PWA demo as the other agent's work lands (cross-repo coordination).
+6. Generate more content on farm sites for SEO.
+7. Add other tools (FarmForge etc.) as their PWA or static versions are ready.
+
+This parallel agent setup (one per repo) is a new experiment for me — looking forward to seeing how the PRs and merges interact!
 
 This setup lets us ship narrow valuable slices immediately while the hub provides the portfolio/brand/billing glue. One happy PaperAirplane customer sees FarmForge and the others.
 
