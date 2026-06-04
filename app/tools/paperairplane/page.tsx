@@ -18,17 +18,17 @@ export default function PaperAirplanePage() {
           <div className="md:col-span-2 space-y-6 text-lg text-white/80">
             <p>
               Beautiful, developmentally-aware PDFs: handwriting with support lines, themed mazes, age-appropriate arithmetic with visuals, and more. 
-              Everything is generated locally on your computer (or in our simple hosted demo) using the exact same engine a farmer-chef uses for his own kids and to create sellable packs.
+              Primary experience is a pure standalone PWA (installable from browser, fully offline after load). Python version remains for pack creators and power users.
             </p>
 
             <div>
               <h3 className="font-medium text-white mb-2">Core (free)</h3>
               <ul className="list-disc pl-5 space-y-1 text-base">
-                <li>CLI + friendly local web UI (Streamlit)</li>
-                <li>Writing/phonics, mazes, arithmetic generators</li>
+                <li>PWA (installable, works offline) + local Python CLI for creators</li>
+                <li>Writing/phonics, mazes, arithmetic generators (PWA spike in progress)</li>
                 <li>Child name, date, age-appropriate line weights &amp; complexity</li>
                 <li>Themes + custom word lists (Pro coming)</li>
-                <li>Batch / YAML pack generation for themed weeks</li>
+                <li>Batch / YAML pack generation for themed weeks (Python power tool)</li>
               </ul>
             </div>
 
@@ -58,16 +58,17 @@ export default function PaperAirplanePage() {
           <div className="space-y-4 text-sm border border-white/10 rounded-2xl p-5 bg-zinc-900/50 h-fit">
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Status</div>
-              <div className="font-medium">Core generator live • Digital packs shipping</div>
+              <div className="font-medium">PWA spike active (PA-005) • Digital packs shipping • Python for creators</div>
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Try it now</div>
-              <a href="https://github.com/flehmenlips/PaperAirplane" target="_blank" className="block mt-1 underline">Download / clone the free tool (GitHub)</a>
-              <p className="text-white/50 text-xs mt-1">pip install -e ".[web]" then paperairplane web</p>
+              <a href="/tools/paperairplane/pwa" className="block mt-1 underline">Try the hosted PWA demo (no install, works offline)</a>
+              <a href="https://github.com/flehmenlips/PaperAirplane" target="_blank" className="block mt-1 underline">GitHub (Python local + packs for creators)</a>
+              <p className="text-white/50 text-xs mt-1">PWA is the primary user experience; Python for batch/packs.</p>
             </div>
             <div>
-              <div className="uppercase text-[10px] tracking-widest text-white/50">Hosted demo (limited)</div>
-              <p className="text-white/60">Coming soon at a Neverstill subdomain. Pro users get priority access &amp; no limits.</p>
+              <div className="uppercase text-[10px] tracking-widest text-white/50">Hosted PWA (Pro)</div>
+              <p className="text-white/60">Full featured PWA (unlimited, more themes/generators). Pro unlocks via Stripe below. See parallel PA-005 spike in PaperAirplane repo for generator port details.</p>
             </div>
             <div className="pt-3 border-t border-white/10 text-xs text-white/50">
               Part of the Neverstill Operator Toolkit. One account, shared portal, cross-promotion to FarmForge forecasting, chef tools, etc.
