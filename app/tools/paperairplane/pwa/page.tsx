@@ -159,18 +159,16 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
 }
 
 export default function PaperAirplanePWA() {
-  const [width, setWidth] = useState(8);
-  const [height, setHeight] = useState(8);
-  const [braid, setBraid] = useState(0.1); // 0 = perfect, higher = more loops for difficulty
+  const [config, setConfig] = useState({ width: 8, height: 8, braid: 0.1 });
   const [theme, setTheme] = useState<'classic' | 'dinosaurs' | 'farm' | 'space'>('classic');
   const [maze, setMaze] = useState<boolean[][]>(() => generateMaze(8, 8, 0.1));
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // For the manual "Regenerate" button (re-seed with current params)
   const regenerate = useCallback(() => {
-    const newMaze = generateMaze(width, height, braid);
+    const newMaze = generateMaze(config.width, config.height, config.braid);
     setMaze(newMaze);
-  }, [width, height, braid]);
+  }, [config]);
 
   useEffect(() => {
     if (maze && canvasRef.current) {
@@ -187,7 +185,7 @@ export default function PaperAirplanePWA() {
 
     // Title
     pdf.setFontSize(16);
-    pdf.text(`PaperAirplane Maze — ${theme} (${width}x${height})`, 20, 20);
+    pdf.text(`PaperAirplane Maze — ${theme} (${config.width}x${config.height})`, 20, 20);
 
     // Instructions
     pdf.setFontSize(10);
@@ -213,7 +211,7 @@ export default function PaperAirplanePWA() {
     pdf.setFontSize(8);
     pdf.text('Generated in the Neverstill Toolkit PWA (PA-005 spike). Full parity with Python version coming.', 20, footerY);
 
-    pdf.save(`paperairplane-maze-${theme}-${width}x${height}.pdf`);
+    pdf.save(`paperairplane-maze-${theme}-${config.width}x${config.height}.pdf`);
   };
 
 
@@ -245,28 +243,31 @@ export default function PaperAirplanePWA() {
             <div>
               <label className="text-xs uppercase tracking-widest text-white/50">Width × Height</label>
               <div className="flex gap-2 mt-2">
-                <input type="range" min="4" max="16" value={width} onChange={(e) => {
+                <input type="range" min="4" max="16" value={config.width} onChange={(e) => {
                   const v = parseInt(e.target.value);
-                  setWidth(v);
-                  const newMaze = generateMaze(v, height, braid);
+                  const newConfig = { ...config, width: v };
+                  setConfig(newConfig);
+                  const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
                   setMaze(newMaze);
                 }} className="flex-1" />
-                <input type="range" min="4" max="16" value={height} onChange={(e) => {
+                <input type="range" min="4" max="16" value={config.height} onChange={(e) => {
                   const v = parseInt(e.target.value);
-                  setHeight(v);
-                  const newMaze = generateMaze(width, v, braid);
+                  const newConfig = { ...config, height: v };
+                  setConfig(newConfig);
+                  const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
                   setMaze(newMaze);
                 }} className="flex-1" />
               </div>
-              <div className="text-center text-sm mt-1">{width} × {height}</div>
+              <div className="text-center text-sm mt-1">{config.width} × {config.height}</div>
             </div>
 
             <div>
               <label className="text-xs uppercase tracking-widest text-white/50">Difficulty (braid / loops)</label>
-              <input type="range" min="0" max="0.4" step="0.05" value={braid} onChange={(e) => {
+              <input type="range" min="0" max="0.4" step="0.05" value={config.braid} onChange={(e) => {
                 const v = parseFloat(e.target.value);
-                setBraid(v);
-                const newMaze = generateMaze(width, height, v);
+                const newConfig = { ...config, braid: v };
+                setConfig(newConfig);
+                const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
                 setMaze(newMaze);
               }} className="w-full mt-2" />
               <div className="text-xs text-white/60 mt-1">0 = perfect maze (unique path). Higher = more choices and backtracking fun.</div>
