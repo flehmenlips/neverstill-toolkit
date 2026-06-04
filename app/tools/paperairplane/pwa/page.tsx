@@ -83,7 +83,7 @@ function generateMaze(width: number, height: number, braid: number = 0): boolean
   return maze;
 }
 
-function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: string) {
+function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: string, style: 'dark' | 'light' = 'dark') {
   const ctx = canvas.getContext('2d', { alpha: true });
   if (!ctx) return;
 
@@ -99,10 +99,22 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
   canvas.width = gridW * cellSize + decoWidth;
   canvas.height = gridH * cellSize;
 
-  ctx.fillStyle = '#111827'; // dark bg
+  // Colors based on style (dark for preview in dark UI, light for printable PDF)
+  const isLight = style === 'light';
+  const bgColor = isLight ? '#f8f1e3' : '#111827'; // paper or dark
+  const wallFill = isLight ? '#3f2a1f' : '#3f2a1f';
+  const startFill = '#22c55e';
+  const endFill = '#ef4444';
+  const decoColors = {
+    dinosaurs: isLight ? '#86efac' : '#86efac',
+    farm: isLight ? '#fde047' : '#fde047',
+    space: isLight ? '#bae6fd' : '#bae6fd'
+  };
+
+  ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = '#f3e8d8'; // warm wall color for "printable"
+  ctx.strokeStyle = isLight ? '#3f2a1f' : '#f3e8d8';
   ctx.lineWidth = Math.max(2, cellSize / 6);
   ctx.lineCap = 'round';
 
@@ -114,11 +126,10 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
         const py = y * cellSize;
 
         ctx.beginPath();
-        // Simple thick segments for walls (mimics the Python rect approach but cleaner)
         if (y % 2 === 0 || x % 2 === 0) {
           ctx.rect(px, py, cellSize, cellSize);
         }
-        ctx.fillStyle = '#3f2a1f';
+        ctx.fillStyle = wallFill;
         ctx.fill();
       }
     }
@@ -127,11 +138,11 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
   // Start (GO)
   const startX = 1 * cellSize + cellSize / 2;
   const startY = 1 * cellSize + cellSize / 2;
-  ctx.fillStyle = '#4ade80';
+  ctx.fillStyle = startFill;
   ctx.beginPath();
   ctx.arc(startX, startY, cellSize / 3, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#111827';
+  ctx.fillStyle = isLight ? '#ffffff' : '#111827'; // contrast on green
   ctx.font = `${Math.floor(cellSize / 2.5)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -140,19 +151,19 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
   // End (FIN)
   const endX = (gridW - 2) * cellSize + cellSize / 2;
   const endY = (gridH - 2) * cellSize + cellSize / 2;
-  ctx.fillStyle = '#f87171';
+  ctx.fillStyle = endFill;
   ctx.beginPath();
   ctx.arc(endX, endY, cellSize / 3, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#111827';
+  ctx.fillStyle = isLight ? '#ffffff' : '#111827';
   ctx.fillText('FIN', endX, endY);
 
   // Theme decoration (simple) - placed in reserved right margin to avoid overlap with maze
   if (theme !== 'classic') {
     const decoX = gridW * cellSize + 5;
-    ctx.fillStyle = theme === 'dinosaurs' ? '#86efac' : theme === 'farm' ? '#fde047' : '#bae6fd';
+    ctx.fillStyle = decoColors[theme as keyof typeof decoColors] || '#bae6fd';
     ctx.fillRect(decoX, 10, 35, 35);
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = isLight ? '#1f2937' : '#111827';
     ctx.font = '10px sans-serif';
     ctx.fillText(theme.slice(0, 3).toUpperCase(), decoX + 18, 28);
   }
@@ -161,7 +172,7 @@ function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: s
 export default function PaperAirplanePWA() {
   const [config, setConfig] = useState({ width: 8, height: 8, braid: 0.1 });
   const [theme, setTheme] = useState<'classic' | 'dinosaurs' | 'farm' | 'space'>('classic');
-  const [maze, setMaze] = useState<boolean[][]>(() => generateMaze(8, 8, 0.1));
+  const [maze, setMaze] = useState<boolean[][] | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // For the manual "Regenerate" button (re-seed with current params)
@@ -170,9 +181,31 @@ export default function PaperAirplanePWA() {
     setMaze(newMaze);
   }, [config]);
 
+  // Defer initial random maze generation to client only (avoids Next.js prerender issues with Math.random in generateMaze)
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (maze && canvasRef.current) {
-      drawMazeOnCanvas(canvasRef.current, maze, theme);
+    if (maze === null) {
+      setMaze(generateMaze(config.width, config.height, config.braid));
+    }
+  }, []); // run once on mount, client-side only
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    if (maze) {
+      drawMazeOnCanvas(canvasRef.current, maze, theme, 'dark');
+    } else {
+      const c = canvasRef.current;
+      c.width = 300;
+      c.height = 180;
+      const ctx = c.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#f8f1e3';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.fillStyle = '#666';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('Loading maze preview...', 70, 90);
+      }
     }
   }, [maze, theme]);
 
@@ -191,10 +224,12 @@ export default function PaperAirplanePWA() {
     pdf.setFontSize(10);
     pdf.text('Print this page. Use a pencil to solve the maze. Great for ages 4-10 depending on size.', 20, 28);
 
-    // Embed canvas as image (simple for spike; full vector port would redraw paths)
-    const imgData = canvasRef.current.toDataURL('image/png');
+    // Use offscreen light canvas for printable PDF (avoids embedding dark UI canvas)
+    const offCanvas = document.createElement('canvas');
+    drawMazeOnCanvas(offCanvas, maze, theme, 'light');
+    const imgData = offCanvas.toDataURL('image/png');
     let imgWidth = 160; // mm target max
-    let imgHeight = (canvasRef.current.height / canvasRef.current.width) * imgWidth;
+    let imgHeight = (offCanvas.height / offCanvas.width) * imgWidth;
 
     // Scale to fit page (title at ~30mm + instructions + margins + footer space)
     const maxImgHeight = pageHeight - 60; // leave room for header/footer
