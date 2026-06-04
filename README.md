@@ -19,7 +19,12 @@ Open http://localhost:3000
 - Shared branding and cross-promotion baked into the cards and pages.
 
 ## Deployment
-Vercel is ideal. Set STRIPE_* env vars (copy .env.example). Use NEXT_PUBLIC_SITE_URL=https://neverstill.farm (or .dev).
+Vercel is ideal. Set STRIPE_* env vars (see env vars in Vercel project settings). Use `NEXT_PUBLIC_SITE_URL=https://neverstill.dev` for production.
+
+**Production Stripe price IDs (live mode, Sea Breeze Farm account):**
+- `STRIPE_PRICE_PAPER_AIRPLANE_PRO=price_1TekEaDy6zALkf5gBuKIO8IF` ($39 one-time)
+- `STRIPE_PRICE_FARMFORGE_PRO=price_1TekEfDy6zALkf5gaFtitdEg` ($49 one-time)
+- `STRIPE_PRICE_TOOLKIT_PASS=price_1TekEfDy6zALkf5g6roKzvaZ` ($99 one-time)
 
 Repo: https://github.com/flehmenlips/neverstill-toolkit
 
@@ -31,7 +36,7 @@ The /tools/paperairplane/pwa is the hosted PWA demo (client-side JS port of gene
 - Hybrid: Sell packs on Gumroad today for immediate revenue; use this hub + Stripe for the "app access" upsell and future recurring.
 
 ## Next concrete steps (PaperAirplane + hub)
-1. Deploy this hub to Vercel with custom domains (neverstill.farm primary, neverstill.dev alias).
+1. Deploy this hub to Vercel with custom domains (**neverstill.dev** primary; neverstill.farm reserved for ranch/KitchenSync site).
 2. Set real Stripe env vars and products/links (replace placeholders).
 3. Enhance /tools/paperairplane/pwa using logic from PaperAirplane spikes/PA-005-jspdf (advanced maze with difficulty, solution paths, etc.) for full featured hosted PWA.
 4. Generate more content on farm sites (seabreeze.farm, cookbook.farm) for SEO flywheel.
