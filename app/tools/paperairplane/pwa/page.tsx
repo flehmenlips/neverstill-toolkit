@@ -1,18 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
 
 // Simple client-side maze generator (recursive backtracking) - spike for PA-005 PWA hosted demo
 // This parallels the Python implementation in the PaperAirplane repo (separate agent).
 // Goal: pure web, installable PWA experience, no server, offline capable.
-
-interface MazeCell {
-  x: number;
-  y: number;
-  walls: { top: boolean; right: boolean; bottom: boolean; left: boolean };
-}
 
 function generateMaze(width: number, height: number, braid: number = 0): boolean[][] {
   // Returns a grid of walls: true = wall present
@@ -24,7 +18,7 @@ function generateMaze(width: number, height: number, braid: number = 0): boolean
   const stack: [number, number][] = [];
   const visited = Array.from({ length: height }, () => Array(width).fill(false));
 
-  let cx = 0, cy = 0;
+  const cx = 0, cy = 0;
   visited[cy][cx] = true;
   stack.push([cx, cy]);
 
@@ -167,13 +161,14 @@ export default function PaperAirplanePWA() {
   const [height, setHeight] = useState(8);
   const [braid, setBraid] = useState(0.1); // 0 = perfect, higher = more loops for difficulty
   const [theme, setTheme] = useState<'classic' | 'dinosaurs' | 'farm' | 'space'>('classic');
-  const [maze, setMaze] = useState<boolean[][] | null>(null);
+  const [maze, setMaze] = useState<boolean[][]>(() => generateMaze(8, 8, 0.1));
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const generate = () => {
+  // For the manual "Regenerate" button (re-seed with current params)
+  const regenerate = useCallback(() => {
     const newMaze = generateMaze(width, height, braid);
     setMaze(newMaze);
-  };
+  }, [width, height, braid]);
 
   useEffect(() => {
     if (maze && canvasRef.current) {
@@ -210,11 +205,7 @@ export default function PaperAirplanePWA() {
     pdf.save(`paperairplane-maze-${theme}-${width}x${height}.pdf`);
   };
 
-  // Auto-regenerate maze when size or difficulty params change (fixes slider/maze sync issue).
-  // The "Regenerate" button still allows re-randomizing the same params.
-  useEffect(() => {
-    generate();
-  }, [width, height, braid]);
+
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -243,15 +234,30 @@ export default function PaperAirplanePWA() {
             <div>
               <label className="text-xs uppercase tracking-widest text-white/50">Width × Height</label>
               <div className="flex gap-2 mt-2">
-                <input type="range" min="4" max="16" value={width} onChange={(e) => setWidth(parseInt(e.target.value))} className="flex-1" />
-                <input type="range" min="4" max="16" value={height} onChange={(e) => setHeight(parseInt(e.target.value))} className="flex-1" />
+                <input type="range" min="4" max="16" value={width} onChange={(e) => {
+                  const v = parseInt(e.target.value);
+                  setWidth(v);
+                  const newMaze = generateMaze(v, height, braid);
+                  setMaze(newMaze);
+                }} className="flex-1" />
+                <input type="range" min="4" max="16" value={height} onChange={(e) => {
+                  const v = parseInt(e.target.value);
+                  setHeight(v);
+                  const newMaze = generateMaze(width, v, braid);
+                  setMaze(newMaze);
+                }} className="flex-1" />
               </div>
               <div className="text-center text-sm mt-1">{width} × {height}</div>
             </div>
 
             <div>
               <label className="text-xs uppercase tracking-widest text-white/50">Difficulty (braid / loops)</label>
-              <input type="range" min="0" max="0.4" step="0.05" value={braid} onChange={(e) => setBraid(parseFloat(e.target.value))} className="w-full mt-2" />
+              <input type="range" min="0" max="0.4" step="0.05" value={braid} onChange={(e) => {
+                const v = parseFloat(e.target.value);
+                setBraid(v);
+                const newMaze = generateMaze(width, height, v);
+                setMaze(newMaze);
+              }} className="w-full mt-2" />
               <div className="text-xs text-white/60 mt-1">0 = perfect maze (unique path). Higher = more choices and backtracking fun.</div>
             </div>
 
@@ -271,7 +277,7 @@ export default function PaperAirplanePWA() {
             </div>
 
             <button
-              onClick={generate}
+              onClick={regenerate}
               className="w-full rounded bg-white text-black py-3 font-medium hover:bg-white/90 active:bg-white"
             >
               Regenerate Maze
