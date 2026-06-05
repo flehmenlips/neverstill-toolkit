@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe';
+import { getCancelPath, resolvePriceId } from '@/lib/stripe-prices';
+import { getSiteUrl } from '@/lib/site';
 
 export async function POST(req: NextRequest) {
   let product = 'paperairplane-pro';
@@ -13,28 +15,34 @@ export async function POST(req: NextRequest) {
     product = (form.get('product') as string) || product;
   }
 
+  let priceId: string;
+  try {
+    priceId = resolvePriceId(product);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Checkout unavailable';
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      return NextResponse.redirect(`${getSiteUrl()}${getCancelPath(product)}?checkout=error`, 303);
+    }
+    return NextResponse.json({ error: message }, { status: 503 });
+  }
+
+  const siteUrl = getSiteUrl();
   const stripe = getStripeClient();
 
-  // Map your products here (create these in Stripe dashboard first)
-  const priceMap: Record<string, string> = {
-    'paperairplane-pro': process.env.STRIPE_PRICE_PAPER_AIRPLANE_PRO || 'price_placeholder',
-    'farmforge-pro': process.env.STRIPE_PRICE_FARMFORGE_PRO || 'price_placeholder',
-    'toolkit-pass': process.env.STRIPE_PRICE_TOOLKIT_PASS || 'price_placeholder',
-  };
-
-  const priceId = priceMap[product] || priceMap['paperairplane-pro'];
-
   const session = await stripe.checkout.sessions.create({
-    mode: 'payment', // or 'subscription' for recurring
+    mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tools/paperairplane`,
+    success_url: `${siteUrl}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}${getCancelPath(product)}`,
     metadata: { product },
   });
 
-  // For form posts, redirect; for JSON, return url
+  if (!session.url) {
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+  }
+
   if (contentType.includes('application/x-www-form-urlencoded')) {
-    return NextResponse.redirect(session.url!);
+    return NextResponse.redirect(session.url, 303);
   }
   return NextResponse.json({ url: session.url });
 }
