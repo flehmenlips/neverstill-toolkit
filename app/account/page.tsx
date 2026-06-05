@@ -1,12 +1,13 @@
 import Link from 'next/link';
+import { verifyCheckoutSession } from '@/lib/verify-checkout-session';
 
 type AccountPageProps = {
   searchParams: Promise<{ success?: string; session_id?: string }>;
 };
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
-  const { success, session_id } = await searchParams;
-  const purchaseComplete = success === 'true';
+  const { session_id } = await searchParams;
+  const purchaseComplete = await verifyCheckoutSession(session_id);
   const portalUrl = process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
 
   return (

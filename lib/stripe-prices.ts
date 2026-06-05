@@ -2,6 +2,16 @@ const PLACEHOLDER = 'price_placeholder';
 
 export type CheckoutProduct = 'paperairplane-pro' | 'farmforge-pro' | 'toolkit-pass';
 
+const CHECKOUT_PRODUCTS: readonly CheckoutProduct[] = [
+  'paperairplane-pro',
+  'farmforge-pro',
+  'toolkit-pass',
+];
+
+export function isCheckoutProduct(product: string): product is CheckoutProduct {
+  return (CHECKOUT_PRODUCTS as readonly string[]).includes(product);
+}
+
 export function getStripePriceMap(): Record<CheckoutProduct, string> {
   return {
     'paperairplane-pro':
@@ -12,9 +22,11 @@ export function getStripePriceMap(): Record<CheckoutProduct, string> {
 }
 
 export function resolvePriceId(product: string): string {
-  const priceMap = getStripePriceMap();
-  const key = product as CheckoutProduct;
-  const priceId = priceMap[key] || priceMap['paperairplane-pro'];
+  if (!isCheckoutProduct(product)) {
+    throw new Error(`Unknown checkout product "${product}".`);
+  }
+
+  const priceId = getStripePriceMap()[product];
 
   if (isInvalidPriceId(priceId)) {
     throw new Error(

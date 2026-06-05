@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe';
-import { getCancelPath, resolvePriceId } from '@/lib/stripe-prices';
+import { getCancelPath, isCheckoutProduct, resolvePriceId } from '@/lib/stripe-prices';
 import { getSiteUrl } from '@/lib/site';
 
 export async function POST(req: NextRequest) {
@@ -13,6 +13,14 @@ export async function POST(req: NextRequest) {
   } else if (contentType.includes('application/x-www-form-urlencoded')) {
     const form = await req.formData();
     product = (form.get('product') as string) || product;
+  }
+
+  if (!isCheckoutProduct(product)) {
+    const message = `Unknown checkout product "${product}".`;
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      return NextResponse.redirect(`${getSiteUrl()}/?checkout=error`, 303);
+    }
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   let priceId: string;
