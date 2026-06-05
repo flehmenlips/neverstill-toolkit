@@ -1,40 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeClient } from '@/lib/stripe';
+import { getCancelPath, isCheckoutProduct, resolvePriceId } from '@/lib/stripe-prices';
+import { getSiteUrl } from '@/lib/site';
+
+function isFormPost(contentType: string): boolean {
+  return (
+    contentType.includes('application/x-www-form-urlencoded') ||
+    contentType.includes('multipart/form-data')
+  );
+}
+
+function redirectCheckoutError(product: string): NextResponse {
+  const path = isCheckoutProduct(product) ? getCancelPath(product) : '/';
+  return NextResponse.redirect(`${getSiteUrl()}${path}?checkout=error`, 303);
+}
 
 export async function POST(req: NextRequest) {
   let product = 'paperairplane-pro';
 
   const contentType = req.headers.get('content-type') || '';
+  const formPost = isFormPost(contentType);
+
   if (contentType.includes('application/json')) {
     const body = await req.json();
     product = body.product || product;
-  } else if (contentType.includes('application/x-www-form-urlencoded')) {
+  } else if (formPost) {
     const form = await req.formData();
     product = (form.get('product') as string) || product;
   }
 
+  if (!isCheckoutProduct(product)) {
+    const message = `Unknown checkout product "${product}".`;
+    if (formPost) {
+      return redirectCheckoutError(product);
+    }
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  let priceId: string;
+  try {
+    priceId = resolvePriceId(product);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Checkout unavailable';
+    if (formPost) {
+      return redirectCheckoutError(product);
+    }
+    return NextResponse.json({ error: message }, { status: 503 });
+  }
+
+  const siteUrl = getSiteUrl();
   const stripe = getStripeClient();
 
-  // Map your products here (create these in Stripe dashboard first)
-  const priceMap: Record<string, string> = {
-    'paperairplane-pro': process.env.STRIPE_PRICE_PAPER_AIRPLANE_PRO || 'price_placeholder',
-    'farmforge-pro': process.env.STRIPE_PRICE_FARMFORGE_PRO || 'price_placeholder',
-    'toolkit-pass': process.env.STRIPE_PRICE_TOOLKIT_PASS || 'price_placeholder',
-  };
+  let session;
+  try {
+    session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${siteUrl}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}${getCancelPath(product)}`,
+      metadata: { product },
+    });
+  } catch {
+    if (formPost) {
+      return redirectCheckoutError(product);
+    }
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+  }
 
-  const priceId = priceMap[product] || priceMap['paperairplane-pro'];
+  if (!session.url) {
+    if (formPost) {
+      return redirectCheckoutError(product);
+    }
+    return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 });
+  }
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment', // or 'subscription' for recurring
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/account?success=true&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tools/paperairplane`,
-    metadata: { product },
-  });
-
-  // For form posts, redirect; for JSON, return url
-  if (contentType.includes('application/x-www-form-urlencoded')) {
-    return NextResponse.redirect(session.url!);
+  if (formPost) {
+    return NextResponse.redirect(session.url, 303);
   }
   return NextResponse.json({ url: session.url });
 }

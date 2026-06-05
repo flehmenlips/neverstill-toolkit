@@ -18,7 +18,20 @@ export default function FarmForgePage() {
           <a href="https://github.com/flehmenlips/farmforge-pnl" target="_blank" className="rounded bg-white/90 text-black px-4 py-2 text-sm font-medium">Open the current FarmForge PNL (GitHub / single file)</a>
         </div>
 
-        <p className="mt-10 text-xs text-white/40">Will be available with Pro access in the shared Neverstill portal (Stripe). Cross-sells beautifully with PaperAirplane for farm families and with recipe tools for on-farm restaurants.</p>
+        <form action="/api/checkout" method="POST" className="mt-8">
+          <input type="hidden" name="product" value="farmforge-pro" />
+          <button
+            type="submit"
+            className="rounded bg-white/90 text-black px-4 py-2 text-sm font-medium hover:bg-white"
+          >
+            Buy FarmForge Pro via Stripe →
+          </button>
+        </form>
+
+        <p className="mt-6 text-xs text-white/40">
+          Pro unlocks hosted scenarios and portal access (Stripe). Cross-sells with PaperAirplane for
+          farm families and recipe tools for on-farm restaurants.
+        </p>
       </div>
     </div>
   );

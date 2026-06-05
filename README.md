@@ -36,8 +36,8 @@ The /tools/paperairplane/pwa is the hosted PWA demo (client-side JS port of gene
 - Hybrid: Sell packs on Gumroad today for immediate revenue; use this hub + Stripe for the "app access" upsell and future recurring.
 
 ## Next concrete steps (PaperAirplane + hub)
-1. Deploy this hub to Vercel with custom domains (**neverstill.dev** primary; neverstill.farm reserved for ranch/KitchenSync site).
-2. Set real Stripe env vars and products/links (replace placeholders).
+1. ~~Deploy hub to Vercel~~ — **live at https://neverstill.dev** (see `docs/DEPLOY.md`).
+2. Finish Stripe ops: webhook + Customer Portal env vars in Vercel, then redeploy.
 3. Enhance /tools/paperairplane/pwa using logic from PaperAirplane spikes/PA-005-jspdf (advanced maze with difficulty, solution paths, etc.) for full featured hosted PWA.
 4. Generate more content on farm sites (seabreeze.farm, cookbook.farm) for SEO flywheel.
 5. Add other tools (FarmForge etc.) as their PWA/static versions ready.
