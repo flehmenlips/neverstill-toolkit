@@ -308,6 +308,9 @@ export default function PaperAirplanePWA() {
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-white/50 mt-2">
+                Border color labels only — maze paths are plain pencil style until decorative themes ship.
+              </p>
             </div>
 
             <div>

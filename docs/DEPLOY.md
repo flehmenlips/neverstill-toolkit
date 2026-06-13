@@ -57,7 +57,7 @@ The route verifies signatures and logs completed checkouts; extend for license k
 
 ## Monetization
 
-- **Gumroad**: https://gumroad.com/neverstill — digital packs today
+- **Gumroad**: https://neverstill.gumroad.com/l/mvwhj — Paper Airplane Starter Pack (9 easy/medium pencil mazes + arithmetic; no decorative themes yet)
 - **Stripe Checkout** (`POST /api/checkout`): Pro one-time on neverstill.dev
 
 ## Post-deploy checklist

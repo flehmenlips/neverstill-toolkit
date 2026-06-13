@@ -66,7 +66,7 @@ export default function NeverstillToolkit() {
           <nav className="flex items-center gap-6 text-sm">
             <Link href="#tools" className="hover:text-white/70 transition">Tools</Link>
             <Link href="#stories" className="hover:text-white/70 transition">From the Farm</Link>
-            <a href="https://gumroad.com/neverstill" target="_blank" className="hover:text-white/70 transition">Shop Packs</a>
+            <a href="https://neverstill.gumroad.com/l/mvwhj" target="_blank" className="hover:text-white/70 transition">Shop Packs</a>
             <Link href="/account" className="rounded-full border border-white/20 px-4 py-1.5 text-xs hover:bg-white/5">Account / Portal</Link>
           </nav>
         </div>
@@ -84,7 +84,7 @@ export default function NeverstillToolkit() {
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <a href="#tools" className="rounded-full bg-white text-black px-6 py-3 text-sm font-medium hover:bg-white/90">Browse the tools</a>
-            <a href="https://gumroad.com/neverstill" target="_blank" className="rounded-full border border-white/30 px-6 py-3 text-sm hover:bg-white/5">Get started with PaperAirplane packs</a>
+            <a href="https://neverstill.gumroad.com/l/mvwhj" target="_blank" className="rounded-full border border-white/30 px-6 py-3 text-sm hover:bg-white/5">Get started with PaperAirplane packs</a>
           </div>
           <form action="/api/checkout" method="POST" className="mt-3">
             <input type="hidden" name="product" value="toolkit-pass" />
@@ -127,22 +127,22 @@ export default function NeverstillToolkit() {
             <div className="md:col-span-2">
               <div className="text-xs tracking-[2px] text-white/50 mb-1">FIRST PUBLIC RELEASE</div>
               <h3 className="text-4xl font-semibold tracking-tighter">PaperAirplane</h3>
-              <p className="mt-3 text-white/70">Generate beautiful, personalized educational printables locally or buy ready-to-print themed packs.</p>
+              <p className="mt-3 text-white/70">Generate beautiful, personalized educational printables locally or buy ready-to-print packs.</p>
               <div className="mt-6 flex flex-wrap gap-2 text-xs">
                 <span className="rounded bg-white/10 px-2 py-0.5">Writing / Phonics</span>
                 <span className="rounded bg-white/10 px-2 py-0.5">Mazes</span>
                 <span className="rounded bg-white/10 px-2 py-0.5">Arithmetic</span>
-                <span className="rounded bg-white/10 px-2 py-0.5">Themed packs</span>
+                <span className="rounded bg-white/10 px-2 py-0.5">Digital packs</span>
               </div>
             </div>
             <div className="md:col-span-3 text-sm text-white/80 space-y-4">
-              <p>Primary experience is a pure standalone PWA (installable from any browser, works fully offline after first load). Production maze generator with Easy/Medium/Hard presets, braid loops, and printable PDF export. Python CLI remains for creators making sellable themed packs.</p>
+              <p>Primary experience is a pure standalone PWA (installable from any browser, works fully offline after first load). Production maze generator with Easy/Medium/Hard presets, braid loops, and printable PDF export. Python CLI remains for creators making sellable custom packs.</p>
               <div>
                 <Link href="/tools/paperairplane" className="inline-block rounded bg-white/90 text-black px-4 py-2 text-sm font-medium hover:bg-white">Open PaperAirplane hub page →</Link>
                 <Link href="/tools/paperairplane/pwa" className="ml-3 inline-block rounded border border-white/30 px-4 py-2 text-sm hover:bg-white/5">Try PWA demo (hosted) →</Link>
               </div>
               <div className="pt-2 border-t border-white/10 text-xs text-white/50">
-                Digital packs (Farm Week, Dino, Ocean, etc.) available now on Gumroad. Generator itself is free + open.
+                Paper Airplane Starter Pack on Gumroad: 9 printable pencil mazes (easy and medium) plus arithmetic. Generator itself is free + open.
               </div>
             </div>
           </div>

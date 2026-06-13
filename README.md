@@ -32,6 +32,7 @@ The /tools/paperairplane/pwa is the hosted PWA demo (client-side JS port of gene
 
 ## Monetization paths used here
 - Gumroad: fastest for digital PDF packs + "Pro generator license" (create the product, upload zips or fulfillment instructions, use their license keys).
+- Live starter pack: https://neverstill.gumroad.com/l/mvwhj — 9 simple pencil mazes (easy and medium) plus arithmetic; marketing copy should not claim farm/dino/space themes until decorative art ships.
 - Stripe (self-hosted): for subscriptions/one-time "Pro access" or "Toolkit Pass", with Customer Portal. Webhooks later for automated fulfillment (email keys, unlock hosted access).
 - Hybrid: Sell packs on Gumroad today for immediate revenue; use this hub + Stripe for the "app access" upsell and future recurring.
 
