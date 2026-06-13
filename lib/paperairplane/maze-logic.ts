@@ -34,6 +34,8 @@ export type MazeResult = {
   grid: MazeGrid;
   stats: MazeStats;
   config: MazeConfig;
+  /** False when returned as best-effort fallback below min_path_ratio. */
+  meetsDifficultyTarget: boolean;
 };
 
 export const DIFFICULTY_DEFAULTS: Record<
@@ -228,10 +230,10 @@ export function generateMazeGrid(
     applyBraid(grid, config.width, config.height, config.braid, rng);
     const stats = mazeStats(grid, config.width, config.height, config.braid);
     if (stats.solvable && stats.path_ratio >= config.min_path_ratio) {
-      return { grid, stats, config };
+      return { grid, stats, config, meetsDifficultyTarget: true };
     }
     if (!best || stats.path_length > best.stats.path_length) {
-      best = { grid, stats, config };
+      best = { grid, stats, config, meetsDifficultyTarget: false };
     }
   }
   return best;

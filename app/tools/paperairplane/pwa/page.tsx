@@ -32,7 +32,12 @@ function buildConfig(params: GeneratorParams): MazeConfig {
 }
 
 function generateFromParams(params: GeneratorParams): MazeResult | null {
-  return generateMazeGrid(buildConfig(params), params.seed);
+  const config = buildConfig(params);
+  for (let offset = 0; offset < 12; offset++) {
+    const result = generateMazeGrid(config, params.seed + offset, 25);
+    if (result?.meetsDifficultyTarget) return result;
+  }
+  return generateMazeGrid(config, params.seed, 25);
 }
 
 export default function PaperAirplanePWA() {
@@ -356,6 +361,11 @@ export default function PaperAirplanePWA() {
                   {stats.solvable ? '' : ' · unsolvable'}
                 </div>
                 <div>Min path ratio target: {(buildConfig(params).min_path_ratio * 100).toFixed(0)}%</div>
+                {mazeResult && !mazeResult.meetsDifficultyTarget && (
+                  <p className="text-amber-400/90">
+                    Could not fully meet difficulty target — try Regenerate or lower braid/size.
+                  </p>
+                )}
               </div>
             )}
 
