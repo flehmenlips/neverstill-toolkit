@@ -3,319 +3,306 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import jsPDF from 'jspdf';
+import {
+  DIFFICULTY_DEFAULTS,
+  generateMazeGrid,
+  randomSeed,
+  resolveMazeConfig,
+  type Difficulty,
+  type MazeConfig,
+  type MazeResult,
+} from '@/lib/paperairplane/maze-logic';
+import { drawMazeToCanvas, type Theme } from '@/lib/paperairplane/maze-render';
 
-// Simple client-side maze generator (recursive backtracking) - spike for PA-005 PWA hosted demo
-// This parallels the Python implementation in the PaperAirplane repo (separate agent).
-// Goal: pure web, installable PWA experience, no server, offline capable.
+type GeneratorParams = {
+  difficulty: Difficulty;
+  width: number;
+  height: number;
+  braid: number;
+  seed: number;
+};
 
-function generateMaze(width: number, height: number, braid: number = 0): boolean[][] {
-  // Returns a grid of walls: true = wall present
-  // Using a 2x grid for walls between cells, simplified for drawing
-  const gridWidth = width * 2 + 1;
-  const gridHeight = height * 2 + 1;
-  const maze: boolean[][] = Array.from({ length: gridHeight }, () => Array(gridWidth).fill(true));
-
-  const stack: [number, number][] = [];
-  const visited = Array.from({ length: height }, () => Array(width).fill(false));
-
-  const cx = 0, cy = 0;
-  visited[cy][cx] = true;
-  stack.push([cx, cy]);
-
-  while (stack.length > 0) {
-    const [x, y] = stack[stack.length - 1];
-    const neighbors: [number, number, string][] = [];
-
-    if (x > 0 && !visited[y][x - 1]) neighbors.push([x - 1, y, 'left']);
-    if (x < width - 1 && !visited[y][x + 1]) neighbors.push([x + 1, y, 'right']);
-    if (y > 0 && !visited[y - 1][x]) neighbors.push([x, y - 1, 'up']);
-    if (y < height - 1 && !visited[y + 1][x]) neighbors.push([x, y + 1, 'down']);
-
-    if (neighbors.length > 0) {
-      const [nx, ny, dir] = neighbors[Math.floor(Math.random() * neighbors.length)];
-      // Carve passage in the wall grid
-      const wx = x * 2 + 1;
-      const wy = y * 2 + 1;
-
-      if (dir === 'left') {
-        maze[wy][wx - 1] = false; // left wall
-      } else if (dir === 'right') {
-        maze[wy][wx + 1] = false;
-      } else if (dir === 'up') {
-        maze[wy - 1][wx] = false;
-      } else if (dir === 'down') {
-        maze[wy + 1][wx] = false;
-      }
-
-      // Mark cell
-      maze[ny * 2 + 1][nx * 2 + 1] = false;
-      visited[ny][nx] = true;
-      stack.push([nx, ny]);
-    } else {
-      stack.pop();
-    }
-  }
-
-  // Add braid (loops) for higher difficulty - randomly remove some internal walls
-  if (braid > 0) {
-    for (let y = 1; y < gridHeight - 1; y += 2) {
-      for (let x = 1; x < gridWidth - 1; x += 2) {
-        if (Math.random() < braid) {
-          // Randomly knock down a wall to a neighbor
-          const dirs = [[0, -2], [2, 0], [0, 2], [-2, 0]];
-          const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx > 0 && nx < gridWidth - 1 && ny > 0 && ny < gridHeight - 1) {
-            const mx = (x + nx) / 2;
-            const my = (y + ny) / 2;
-            maze[my][mx] = false;
-          }
-        }
-      }
-    }
-  }
-
-  // Ensure start and end are open
-  maze[1][1] = false; // start cell
-  maze[gridHeight - 2][gridWidth - 2] = false; // end cell
-
-  return maze;
+function buildConfig(params: GeneratorParams): MazeConfig {
+  return resolveMazeConfig({
+    difficulty: params.difficulty,
+    width: params.width,
+    height: params.height,
+    braid: params.braid,
+  });
 }
 
-function drawMazeOnCanvas(canvas: HTMLCanvasElement, maze: boolean[][], theme: string, style: 'dark' | 'light' = 'dark') {
-  const ctx = canvas.getContext('2d', { alpha: true });
-  if (!ctx) return;
-
-  const gridH = maze.length;
-  const gridW = maze[0].length;
-
-  // Compute cell size from the actual generated maze grid (logical size = (grid-1)/2 )
-  const logicalW = (gridW - 1) / 2;
-  const logicalH = (gridH - 1) / 2;
-  const cellSize = Math.min(28, Math.floor(520 / Math.max(logicalW, logicalH)));
-
-  const decoWidth = (theme !== 'classic') ? 45 : 0; // reserve space for theme decoration on the right
-  canvas.width = gridW * cellSize + decoWidth;
-  canvas.height = gridH * cellSize;
-
-  // Colors based on style (dark for preview in dark UI, light for printable PDF)
-  const isLight = style === 'light';
-  const bgColor = isLight ? '#f8f1e3' : '#111827'; // paper or dark
-  const wallFill = isLight ? '#3f2a1f' : '#3f2a1f';
-  const startFill = '#22c55e';
-  const endFill = '#ef4444';
-  const decoColors = {
-    dinosaurs: isLight ? '#86efac' : '#86efac',
-    farm: isLight ? '#fde047' : '#fde047',
-    space: isLight ? '#bae6fd' : '#bae6fd'
-  };
-
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = isLight ? '#3f2a1f' : '#f3e8d8';
-  ctx.lineWidth = Math.max(2, cellSize / 6);
-  ctx.lineCap = 'round';
-
-  // Draw walls
-  for (let y = 0; y < gridH; y++) {
-    for (let x = 0; x < gridW; x++) {
-      if (maze[y][x]) {
-        const px = x * cellSize;
-        const py = y * cellSize;
-
-        ctx.beginPath();
-        if (y % 2 === 0 || x % 2 === 0) {
-          ctx.rect(px, py, cellSize, cellSize);
-        }
-        ctx.fillStyle = wallFill;
-        ctx.fill();
-      }
+function generateFromParams(params: GeneratorParams): MazeResult | null {
+  const config = buildConfig(params);
+  let best: MazeResult | null = null;
+  for (let offset = 0; offset < 12; offset++) {
+    const result = generateMazeGrid(config, params.seed + offset, 25);
+    if (result?.meetsDifficultyTarget) return result;
+    if (result && (!best || result.stats.path_ratio > best.stats.path_ratio)) {
+      best = result;
     }
   }
-
-  // Start (GO)
-  const startX = 1 * cellSize + cellSize / 2;
-  const startY = 1 * cellSize + cellSize / 2;
-  ctx.fillStyle = startFill;
-  ctx.beginPath();
-  ctx.arc(startX, startY, cellSize / 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = isLight ? '#ffffff' : '#111827'; // contrast on green
-  ctx.font = `${Math.floor(cellSize / 2.5)}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('GO', startX, startY);
-
-  // End (FIN)
-  const endX = (gridW - 2) * cellSize + cellSize / 2;
-  const endY = (gridH - 2) * cellSize + cellSize / 2;
-  ctx.fillStyle = endFill;
-  ctx.beginPath();
-  ctx.arc(endX, endY, cellSize / 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = isLight ? '#ffffff' : '#111827';
-  ctx.fillText('FIN', endX, endY);
-
-  // Theme decoration (simple) - placed in reserved right margin to avoid overlap with maze
-  if (theme !== 'classic') {
-    const decoX = gridW * cellSize + 5;
-    ctx.fillStyle = decoColors[theme as keyof typeof decoColors] || '#bae6fd';
-    ctx.fillRect(decoX, 10, 35, 35);
-    ctx.fillStyle = isLight ? '#1f2937' : '#111827';
-    ctx.font = '10px sans-serif';
-    ctx.fillText(theme.slice(0, 3).toUpperCase(), decoX + 18, 28);
-  }
+  return best;
 }
 
 export default function PaperAirplanePWA() {
-  const [config, setConfig] = useState({ width: 8, height: 8, braid: 0.1 });
-  const [theme, setTheme] = useState<'classic' | 'dinosaurs' | 'farm' | 'space'>('classic');
-  const [maze, setMaze] = useState<boolean[][] | null>(null);
+  const [params, setParams] = useState<GeneratorParams>({
+    difficulty: 'medium',
+    width: DIFFICULTY_DEFAULTS.medium.width,
+    height: DIFFICULTY_DEFAULTS.medium.height,
+    braid: DIFFICULTY_DEFAULTS.medium.braid,
+    seed: 0,
+  });
+  const [theme, setTheme] = useState<Theme>('classic');
+  const [showSolution, setShowSolution] = useState(false);
+  const [mazeResult, setMazeResult] = useState<MazeResult | null>(null);
+  const [seedInput, setSeedInput] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // For the manual "Regenerate" button (re-seed with current params)
-  const regenerate = useCallback(() => {
-    const newMaze = generateMaze(config.width, config.height, config.braid);
-    setMaze(newMaze);
-  }, [config]);
+  const applyParams = useCallback((next: GeneratorParams | ((prev: GeneratorParams) => GeneratorParams)) => {
+    if (typeof next === 'function') {
+      setParams((prev) => {
+        const updated = next(prev);
+        setMazeResult(generateFromParams(updated));
+        return updated;
+      });
+    } else {
+      setParams(next);
+      setMazeResult(generateFromParams(next));
+    }
+  }, []);
 
-  // Defer initial random maze generation to client only (avoids Next.js prerender issues with Math.random in generateMaze)
+  const setDifficulty = useCallback(
+    (difficulty: Difficulty) => {
+      const defaults = DIFFICULTY_DEFAULTS[difficulty];
+      applyParams((prev) => ({
+        ...prev,
+        difficulty,
+        width: defaults.width,
+        height: defaults.height,
+        braid: defaults.braid,
+      }));
+    },
+    [applyParams],
+  );
+
+  const regenerate = useCallback(() => {
+    const nextSeed = randomSeed();
+    setSeedInput(String(nextSeed));
+    applyParams((prev) => ({ ...prev, seed: nextSeed }));
+  }, [applyParams]);
+
+  const applySeedFromInput = useCallback(() => {
+    const parsed = Number.parseInt(seedInput, 10);
+    if (!Number.isFinite(parsed)) return;
+    applyParams((prev) => ({ ...prev, seed: parsed >>> 0 }));
+  }, [applyParams, seedInput]);
+
   /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (maze === null) {
-      setMaze(generateMaze(config.width, config.height, config.braid));
+    if (mazeResult === null) {
+      const seed = randomSeed();
+      const initial: GeneratorParams = {
+        difficulty: 'medium',
+        width: DIFFICULTY_DEFAULTS.medium.width,
+        height: DIFFICULTY_DEFAULTS.medium.height,
+        braid: DIFFICULTY_DEFAULTS.medium.braid,
+        seed,
+      };
+      setSeedInput(String(seed));
+      setParams(initial);
+      setMazeResult(generateFromParams(initial));
     }
-  }, []); // run once on mount, client-side only
+  }, []);
   /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    if (maze) {
-      drawMazeOnCanvas(canvasRef.current, maze, theme, 'dark');
+    if (mazeResult) {
+      drawMazeToCanvas(canvasRef.current, mazeResult.grid, mazeResult.config, mazeResult.stats, {
+        style: 'dark',
+        theme,
+        showPath: showSolution,
+      });
     } else {
       const c = canvasRef.current;
       c.width = 300;
       c.height = 180;
       const ctx = c.getContext('2d');
       if (ctx) {
-        ctx.fillStyle = '#f8f1e3';
+        ctx.fillStyle = '#111827';
         ctx.fillRect(0, 0, c.width, c.height);
-        ctx.fillStyle = '#666';
+        ctx.fillStyle = '#94a3b8';
         ctx.font = '12px sans-serif';
         ctx.fillText('Loading maze preview...', 70, 90);
       }
     }
-  }, [maze, theme]);
+  }, [mazeResult, theme, showSolution]);
 
   const exportPDF = () => {
-    if (!maze || !canvasRef.current) return;
+    if (!mazeResult) return;
 
+    const { grid, stats, config } = mazeResult;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    // Title
     pdf.setFontSize(16);
-    pdf.text(`PaperAirplane Maze — ${theme} (${config.width}x${config.height})`, 20, 20);
+    pdf.text(
+      `PaperAirplane Maze — ${theme} (${config.difficulty}, ${config.width}×${config.height})`,
+      20,
+      20,
+    );
 
-    // Instructions
     pdf.setFontSize(10);
-    pdf.text('Print this page. Use a pencil to solve the maze. Great for ages 4-10 depending on size.', 20, 28);
+    pdf.text('Print this page. Use a pencil to solve the maze. Ages 4–10+ depending on difficulty.', 20, 28);
+    if (stats.solvable) {
+      pdf.text(`Solution path: ${stats.path_length} steps · seed ${params.seed}`, 20, 34);
+    }
 
-    // Use offscreen light canvas for printable PDF (avoids embedding dark UI canvas)
     const offCanvas = document.createElement('canvas');
-    drawMazeOnCanvas(offCanvas, maze, theme, 'light');
+    drawMazeToCanvas(offCanvas, grid, config, stats, {
+      style: 'light',
+      theme,
+      showPath: showSolution,
+      maxWidthPx: 680,
+    });
     const imgData = offCanvas.toDataURL('image/png');
-    let imgWidth = 160; // mm target max
+    let imgWidth = 160;
     let imgHeight = (offCanvas.height / offCanvas.width) * imgWidth;
 
-    // Scale to fit page (title at ~30mm + instructions + margins + footer space)
-    const maxImgHeight = pageHeight - 60; // leave room for header/footer
+    const maxImgHeight = pageHeight - 60;
     if (imgHeight > maxImgHeight) {
       const scale = maxImgHeight / imgHeight;
       imgHeight = maxImgHeight;
       imgWidth = imgWidth * scale;
     }
     const x = (pageWidth - imgWidth) / 2;
-    pdf.addImage(imgData, 'PNG', x, 35, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'PNG', x, 40, imgWidth, imgHeight);
 
-    // Footer - positioned safely below image
-    const footerY = Math.max(pageHeight - 15, 35 + imgHeight + 10);
+    const footerY = Math.max(pageHeight - 15, 40 + imgHeight + 10);
     pdf.setFontSize(8);
-    pdf.text('Generated in the Neverstill Toolkit PWA (PA-005 spike). Full parity with Python version coming.', 20, footerY);
+    pdf.text('Generated at neverstill.dev · Neverstill Operator Toolkit', 20, footerY);
 
-    pdf.save(`paperairplane-maze-${theme}-${config.width}x${config.height}.pdf`);
+    pdf.save(
+      `paperairplane-maze-${theme}-${config.difficulty}-${config.width}x${config.height}-seed${params.seed}.pdf`,
+    );
   };
 
-
+  const stats = mazeResult?.stats;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <div className="mx-auto max-w-4xl px-6 py-10">
-        <Link href="/tools/paperairplane" className="text-sm text-white/50 hover:text-white">← Back to PaperAirplane</Link>
+        <Link href="/tools/paperairplane" className="text-sm text-white/50 hover:text-white">
+          ← Back to PaperAirplane
+        </Link>
 
         <div className="mt-6">
           <div className="flex items-center gap-3">
             <span className="text-4xl">🧩</span>
             <div>
-              <h1 className="text-4xl font-semibold tracking-tighter">PaperAirplane PWA Demo</h1>
-              <p className="text-white/60">Interactive maze generator — PA-005 hosted spike</p>
+              <h1 className="text-4xl font-semibold tracking-tighter">PaperAirplane Mazes</h1>
+              <p className="text-white/60">Hosted PWA — difficulty presets, braid loops, printable PDF</p>
             </div>
           </div>
         </div>
 
         <div className="mt-4 text-sm text-white/70 bg-white/5 p-4 rounded-xl">
-          This is a pure-web, client-side spike of the maze generator (recursive backtracking + optional braid for loops/higher difficulty).
-          Matches the philosophy of the Python version but runs 100% in the browser (no install, installable as PWA via browser menu).
-          Canvas preview + PDF export using jsPDF. Full port of writing + more themes + parity with Python in the parallel PaperAirplane PA-005 work.
+          Production maze generator ported from PaperAirplane{' '}
+          <code className="text-xs text-white/80">spikes/PA-005-jspdf</code>: recursive backtracking, braid
+          candidate selection, BFS path validation, and Mulberry32 seeded randomness. Runs 100% in the
+          browser — installable PWA, offline after first load.
         </div>
 
         <div className="mt-8 grid md:grid-cols-5 gap-8">
-          {/* Controls */}
           <div className="md:col-span-2 space-y-6">
             <div>
-              <label className="text-xs uppercase tracking-widest text-white/50">Width × Height</label>
-              <div className="flex gap-2 mt-2">
-                <input type="range" min="4" max="16" value={config.width} onChange={(e) => {
-                  const v = parseInt(e.target.value);
-                  const newConfig = { ...config, width: v };
-                  setConfig(newConfig);
-                  const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
-                  setMaze(newMaze);
-                }} className="flex-1" />
-                <input type="range" min="4" max="16" value={config.height} onChange={(e) => {
-                  const v = parseInt(e.target.value);
-                  const newConfig = { ...config, height: v };
-                  setConfig(newConfig);
-                  const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
-                  setMaze(newMaze);
-                }} className="flex-1" />
+              <label className="text-xs uppercase tracking-widest text-white/50">Difficulty preset</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {(['easy', 'medium', 'hard'] as const).map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDifficulty(d)}
+                    className={`px-3 py-1 text-sm rounded-full border capitalize ${
+                      params.difficulty === d
+                        ? 'bg-white text-black border-white'
+                        : 'border-white/20 hover:border-white/40'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
               </div>
-              <div className="text-center text-sm mt-1">{config.width} × {config.height}</div>
+              <p className="text-xs text-white/50 mt-2">
+                Easy {DIFFICULTY_DEFAULTS.easy.width}×{DIFFICULTY_DEFAULTS.easy.height} · Medium{' '}
+                {DIFFICULTY_DEFAULTS.medium.width}×{DIFFICULTY_DEFAULTS.medium.height} · Hard{' '}
+                {DIFFICULTY_DEFAULTS.hard.width}×{DIFFICULTY_DEFAULTS.hard.height}
+              </p>
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-widest text-white/50">Difficulty (braid / loops)</label>
-              <input type="range" min="0" max="0.4" step="0.05" value={config.braid} onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                const newConfig = { ...config, braid: v };
-                setConfig(newConfig);
-                const newMaze = generateMaze(newConfig.width, newConfig.height, newConfig.braid);
-                setMaze(newMaze);
-              }} className="w-full mt-2" />
-              <div className="text-xs text-white/60 mt-1">0 = perfect maze (unique path). Higher = more choices and backtracking fun.</div>
+              <label className="text-xs uppercase tracking-widest text-white/50">Width × Height</label>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="range"
+                  min="4"
+                  max="20"
+                  value={params.width}
+                  onChange={(e) => {
+                    const width = parseInt(e.target.value, 10);
+                    applyParams((prev) => ({ ...prev, width }));
+                  }}
+                  className="flex-1"
+                />
+                <input
+                  type="range"
+                  min="4"
+                  max="20"
+                  value={params.height}
+                  onChange={(e) => {
+                    const height = parseInt(e.target.value, 10);
+                    applyParams((prev) => ({ ...prev, height }));
+                  }}
+                  className="flex-1"
+                />
+              </div>
+              <div className="text-center text-sm mt-1">
+                {params.width} × {params.height}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-widest text-white/50">Braid (extra loops)</label>
+              <input
+                type="range"
+                min="0"
+                max="0.35"
+                step="0.01"
+                value={params.braid}
+                onChange={(e) => {
+                  const braid = parseFloat(e.target.value);
+                  applyParams((prev) => ({ ...prev, braid }));
+                }}
+                className="w-full mt-2"
+              />
+              <div className="text-xs text-white/60 mt-1">
+                {params.braid.toFixed(2)} — higher braid adds dead ends and backtracking (validated via min path
+                ratio).
+              </div>
             </div>
 
             <div>
               <label className="text-xs uppercase tracking-widest text-white/50">Theme</label>
               <div className="flex flex-wrap gap-2 mt-2">
-                {(['classic', 'dinosaurs', 'farm', 'space'] as const).map(t => (
+                {(['classic', 'dinosaurs', 'farm', 'space'] as const).map((t) => (
                   <button
                     key={t}
+                    type="button"
                     onClick={() => setTheme(t)}
-                    className={`px-3 py-1 text-sm rounded-full border ${theme === t ? 'bg-white text-black border-white' : 'border-white/20 hover:border-white/40'}`}
+                    className={`px-3 py-1 text-sm rounded-full border ${
+                      theme === t ? 'bg-white text-black border-white' : 'border-white/20 hover:border-white/40'
+                    }`}
                   >
                     {t}
                   </button>
@@ -323,7 +310,39 @@ export default function PaperAirplanePWA() {
               </div>
             </div>
 
+            <div>
+              <label className="text-xs uppercase tracking-widest text-white/50">Seed (reproducible export)</label>
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={seedInput}
+                  onChange={(e) => setSeedInput(e.target.value)}
+                  className="flex-1 rounded bg-zinc-900 border border-white/20 px-2 py-1 text-sm"
+                  placeholder="e.g. 42"
+                />
+                <button
+                  type="button"
+                  onClick={applySeedFromInput}
+                  className="rounded border border-white/30 px-3 py-1 text-sm hover:bg-white/5"
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-white/80 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showSolution}
+                onChange={(e) => setShowSolution(e.target.checked)}
+                className="rounded"
+              />
+              Show solution path (preview + PDF)
+            </label>
+
             <button
+              type="button"
               onClick={regenerate}
               className="w-full rounded bg-white text-black py-3 font-medium hover:bg-white/90 active:bg-white"
             >
@@ -331,36 +350,61 @@ export default function PaperAirplanePWA() {
             </button>
 
             <button
+              type="button"
               onClick={exportPDF}
-              disabled={!maze}
+              disabled={!mazeResult}
               className="w-full rounded border border-white/30 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
             >
               Export Printable PDF
             </button>
 
+            {stats && (
+              <div className="text-xs text-white/50 border-t border-white/10 pt-3 space-y-1">
+                <div>
+                  Path: {stats.path_length} steps · ratio {(stats.path_ratio * 100).toFixed(0)}%
+                  {stats.solvable ? '' : ' · unsolvable'}
+                </div>
+                <div>Min path ratio target: {(buildConfig(params).min_path_ratio * 100).toFixed(0)}%</div>
+                {mazeResult && !mazeResult.meetsDifficultyTarget && (
+                  <p className="text-amber-400/90">
+                    Could not fully meet difficulty target — try Regenerate or lower braid/size.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="text-[10px] text-white/40 pt-4 border-t border-white/10">
-              This demo is fully client-side. Add to home screen for real PWA experience. Pro (via Stripe in the hub) will unlock more generators, larger sizes, and custom themes.
+              Client-side only. Add to home screen for offline use. Pro (Stripe) unlocks more generators and pack
+              features later.
             </div>
           </div>
 
-          {/* Preview */}
           <div className="md:col-span-3">
             <div className="border border-white/10 rounded-2xl p-4 bg-zinc-900/50">
               <canvas
                 ref={canvasRef}
                 className="w-full max-w-[520px] mx-auto border border-white/10 rounded bg-[#111827]"
               />
-              <p className="text-center text-xs text-white/50 mt-3">Preview — solve with pencil after printing. GO to FIN.</p>
+              <p className="text-center text-xs text-white/50 mt-3">GO → FIN · thick walls for pencil solving</p>
             </div>
 
             <div className="mt-4 text-xs text-white/50">
-              <strong>PA-005 note:</strong> This is the toolkit-side spike for hosted PWA. The full generator port, writing tracing vectors, fidelity matching, and Pyodide experiments are happening in parallel in the PaperAirplane repo by another agent. Exciting to compare the two workflows!
+              Algorithms match the PaperAirplane Python generator and{' '}
+              <a
+                href="https://github.com/flehmenlips/PaperAirplane/tree/main/spikes/PA-005-jspdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-white/80"
+              >
+                PA-005-jspdf spike
+              </a>
+              . Python CLI remains the pack-production tool for Gumroad bundles.
             </div>
           </div>
         </div>
 
         <div className="mt-12 text-xs text-white/40 border-t border-white/10 pt-6">
-          Part of Neverstill Operator Toolkit • PWA direction (PA-005) • Python remains the pack production tool
+          Part of Neverstill Operator Toolkit · NT-002 · Python pack tool in sibling PaperAirplane repo
         </div>
       </div>
     </div>
