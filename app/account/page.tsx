@@ -40,7 +40,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <ul className="mt-3 text-sm list-disc pl-5 space-y-1 text-white/70">
             <li>Manage cards, invoices, and receipts</li>
             <li>Future: download links for Pro unlocks and license keys</li>
-            <li>Packs sold on Gumroad: https://gumroad.com/neverstill</li>
+            <li>Packs sold on Gumroad: https://neverstill.gumroad.com/l/mvwhj</li>
           </ul>
 
           {portalUrl ? (

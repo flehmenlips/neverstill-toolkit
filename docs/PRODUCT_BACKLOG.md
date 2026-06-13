@@ -125,7 +125,7 @@ Read this section **once per session** before you touch any backlog item.
   - `STRIPE_PRICE_TOOLKIT_PASS=price_1TekEfDy6zALkf5g6roKzvaZ` ($99 one-time)
 - **Key pages live**: Hub, PaperAirplane marketing + PWA, FarmForge, PrepBoard, ChefScale (stubs with CTAs), /account (success + portal stub), /api/checkout, basic Stripe webhook.
 - **Deploy docs**: See `docs/DEPLOY.md` (DNS, env vars, webhook registration steps, customer portal setup).
-- **Monetization live**: Gumroad (https://gumroad.com/neverstill) + direct Stripe via hub forms.
+- **Monetization live**: Gumroad (https://neverstill.gumroad.com/l/mvwhj) + direct Stripe via hub forms.
 - **Gaps still open** (see backlog): PWA enhancements (NT-002), hosted depth for the other three tools, installability polish (NT-004), fulfillment automation beyond logging (NT-005).
 - **Mobile path**: Planned via kitchensync/mobile/mobile Expo workflow (see NT-013 and Vision section above). No native builds or store listings for toolkit tools yet; web/PWA is the current distribution. FarmForge integration is already happening in the broader kitchensync platform (web + mobile ledgers).
 

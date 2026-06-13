@@ -17,7 +17,7 @@ export default function PaperAirplanePage() {
         <div className="mt-8 grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6 text-lg text-white/80">
             <p>
-              Beautiful, developmentally-aware PDFs: handwriting with support lines, themed mazes, age-appropriate arithmetic with visuals, and more. 
+              Beautiful, developmentally-aware PDFs: handwriting with support lines, simple pencil mazes (easy and medium in packs; hard in the PWA), age-appropriate arithmetic with visuals, and more. 
               Primary experience is a pure standalone PWA (installable from browser, fully offline after load). Python version remains for pack creators and power users.
             </p>
 
@@ -27,16 +27,16 @@ export default function PaperAirplanePage() {
                 <li>PWA (installable, works offline) + local Python CLI for creators</li>
                 <li>Writing/phonics, mazes (Easy/Medium/Hard + braid), arithmetic generators</li>
                 <li>Child name, date, age-appropriate line weights &amp; complexity</li>
-                <li>Themes + custom word lists (Pro coming)</li>
+                <li>PWA maze border labels (decorative only for now — full themed art coming)</li>
                 <li>Batch / YAML pack generation for themed weeks (Python power tool)</li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-medium text-white mb-2">Pro &amp; Packs (paid)</h3>
-              <p className="text-base">Curated, print-ready themed bundles (Farm Week, Dino Adventures, Ocean, Feelings, seasonal, etc.). Lifetime generator updates. Hosted web version (no install). Priority new generators.</p>
+              <p className="text-base">Curated print-ready packs — the Starter Pack ships 9 easy and medium pencil mazes plus arithmetic sheets. More themed bundles as decorative art ships. Lifetime generator updates. Hosted web version (no install). Priority new generators.</p>
               <a 
-                href="https://gumroad.com/neverstill" 
+                href="https://neverstill.gumroad.com/l/mvwhj" 
                 target="_blank"
                 className="mt-3 inline-block rounded bg-white px-5 py-2 text-sm font-medium text-black hover:bg-white/90"
               >
@@ -68,7 +68,7 @@ export default function PaperAirplanePage() {
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Hosted PWA (Pro)</div>
-              <p className="text-white/60">Full featured PWA (larger sizes, solution overlay, more themes/generators). Pro unlocks via Stripe below.</p>
+              <p className="text-white/60">Full featured PWA (larger sizes, solution overlay, more generators). Pro unlocks via Stripe below.</p>
             </div>
             <div className="pt-3 border-t border-white/10 text-xs text-white/50">
               Part of the Neverstill Operator Toolkit. One account, shared portal, cross-promotion to FarmForge forecasting, chef tools, etc.
