@@ -25,9 +25,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-sm text-emerald-100">
             <p className="font-medium">Thank you — payment received.</p>
             <p className="mt-1 text-emerald-100/80">
-              Gumroad pack downloads use your Gumroad receipt. Stripe Pro access will unlock here as
-              fulfillment automates (webhook on{' '}
-              <code className="text-xs">/api/webhooks/stripe</code>).
+              Gumroad pack downloads use your Gumroad receipt. Stripe Pro purchases are recorded via
+              our webhook; use the Customer Portal below for receipts and billing history. Hosted Pro
+              unlocks will appear here as fulfillment expands (NT-005).
             </p>
             {session_id && (
               <p className="mt-2 text-xs text-emerald-100/60 font-mono break-all">Session: {session_id}</p>

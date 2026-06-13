@@ -26,12 +26,19 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('[stripe webhook] checkout.session.completed', {
-        sessionId: session.id,
-        product: session.metadata?.product,
-        customerId: session.customer,
-        paymentStatus: session.payment_status,
-      });
+      console.log(
+        '[stripe webhook] checkout.session.completed',
+        JSON.stringify({
+          sessionId: session.id,
+          product: session.metadata?.product ?? null,
+          customerId: session.customer ?? null,
+          customerEmail: session.customer_details?.email ?? session.customer_email ?? null,
+          paymentStatus: session.payment_status,
+          amountTotal: session.amount_total,
+          currency: session.currency,
+          livemode: event.livemode,
+        }),
+      );
       break;
     }
     default:

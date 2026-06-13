@@ -43,7 +43,7 @@ Copy `.env.example` for local dev (use test keys locally).
 ## Stripe webhook (Dashboard)
 
 1. [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks) → **Add endpoint**
-2. **Endpoint URL:** `https://neverstill.dev/api/webhooks/stripe`
+2. **Endpoint URL:** `https://www.neverstill.dev/api/webhooks/stripe` (apex `neverstill.dev` redirects to www)
 3. **Events:** at minimum `checkout.session.completed`
 4. Copy **Signing secret** (`whsec_...`) → `STRIPE_WEBHOOK_SECRET` in Vercel → **Redeploy**
 
@@ -62,10 +62,14 @@ The route verifies signatures and logs completed checkouts; extend for license k
 
 ## Post-deploy checklist
 
-- [x] Production deploy on Vercel
+See the living prioritized backlog in `docs/PRODUCT_BACKLOG.md` (especially NT-001 and related items) for the current state of operational follow-ups. This file is the runbook snapshot.
+
+- [x] Production deploy on Vercel (live at https://neverstill.dev)
 - [x] `neverstill.dev` + SSL
-- [ ] `www.neverstill.dev` added in Vercel Domains
-- [ ] All production env vars set + redeploy
-- [ ] Stripe webhook endpoint + `STRIPE_WEBHOOK_SECRET`
-- [ ] Customer portal URL env var
-- [ ] Smoke: PWA PDF export, Stripe checkout → `/account?success=true`
+- [x] `www.neverstill.dev` added in Vercel Domains
+- [x] All production env vars set + redeploy (live Stripe keys, prices, webhook secret, portal URL — verified via Vercel env + Stripe MCP/CLI, June 2026)
+- [x] Stripe webhook endpoint registered (`we_1TentcDy6zALkf5gEqGe3hje`, live, `checkout.session.completed` → `https://www.neverstill.dev/api/webhooks/stripe`) + `STRIPE_WEBHOOK_SECRET` in Vercel
+- [x] Customer portal URL env var wired and visible on /account (`https://billing.stripe.com/p/login/9B69ATg468KZ7S81O21ck00`)
+- [x] Smoke: PWA PDF export; live checkout session creation (`POST /api/checkout`); webhook route returns 400 without signature (expected); portal button live on /account
+
+**Full product roadmap, vision, and next NT-xxx items:** [docs/PRODUCT_BACKLOG.md](../PRODUCT_BACKLOG.md) (includes Stripe fulfillment, PWA depth for PaperAirplane + other tools, etc.).
