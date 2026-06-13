@@ -25,7 +25,7 @@ export default function PaperAirplanePage() {
               <h3 className="font-medium text-white mb-2">Core (free)</h3>
               <ul className="list-disc pl-5 space-y-1 text-base">
                 <li>PWA (installable, works offline) + local Python CLI for creators</li>
-                <li>Writing/phonics, mazes, arithmetic generators (PWA spike in progress)</li>
+                <li>Writing/phonics, mazes (Easy/Medium/Hard + braid), arithmetic generators</li>
                 <li>Child name, date, age-appropriate line weights &amp; complexity</li>
                 <li>Themes + custom word lists (Pro coming)</li>
                 <li>Batch / YAML pack generation for themed weeks (Python power tool)</li>
@@ -58,17 +58,17 @@ export default function PaperAirplanePage() {
           <div className="space-y-4 text-sm border border-white/10 rounded-2xl p-5 bg-zinc-900/50 h-fit">
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Status</div>
-              <div className="font-medium">PWA spike active (PA-005) • Digital packs shipping • Python for creators</div>
+              <div className="font-medium">Hosted PWA live • Digital packs shipping • Python for creators</div>
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Try it now</div>
-              <a href="/tools/paperairplane/pwa" className="block mt-1 underline">Try the hosted PWA demo (no install, works offline)</a>
+              <a href="/tools/paperairplane/pwa" className="block mt-1 underline">Try the hosted maze PWA (difficulty presets, PDF export)</a>
               <a href="https://github.com/flehmenlips/PaperAirplane" target="_blank" className="block mt-1 underline">GitHub (Python local + packs for creators)</a>
               <p className="text-white/50 text-xs mt-1">PWA is the primary user experience; Python for batch/packs.</p>
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Hosted PWA (Pro)</div>
-              <p className="text-white/60">Full featured PWA (unlimited, more themes/generators). Pro unlocks via Stripe below. See parallel PA-005 spike in PaperAirplane repo for generator port details.</p>
+              <p className="text-white/60">Full featured PWA (larger sizes, solution overlay, more themes/generators). Pro unlocks via Stripe below.</p>
             </div>
             <div className="pt-3 border-t border-white/10 text-xs text-white/50">
               Part of the Neverstill Operator Toolkit. One account, shared portal, cross-promotion to FarmForge forecasting, chef tools, etc.

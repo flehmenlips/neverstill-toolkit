@@ -5,8 +5,8 @@ const tools = [
     slug: 'paperairplane',
     name: 'PaperAirplane',
     tagline: 'Personalized printable worksheets & educational packs for kids 1–8+',
-    description: 'Beautiful, developmentally-aware PDFs for handwriting, mazes, arithmetic and more. PWA (installable + offline) + Python for creators & packs. PA-005 spike active.',
-    status: 'PWA demo live • Packs shipping',
+    description: 'Beautiful, developmentally-aware PDFs for handwriting, mazes, arithmetic and more. Hosted PWA with difficulty presets + Python for creators & packs.',
+    status: 'PWA live • Packs shipping',
     price: 'Free core • Packs $12–29 on Gumroad',
     cta: 'Try local generator or buy packs',
     href: '/tools/paperairplane',
@@ -136,7 +136,7 @@ export default function NeverstillToolkit() {
               </div>
             </div>
             <div className="md:col-span-3 text-sm text-white/80 space-y-4">
-              <p>Primary experience is a pure standalone PWA (installable from any browser, works fully offline after first load). Python CLI remains for creators making sellable themed packs. Parallel PA-005 work happening in the PaperAirplane repo for generator ports.</p>
+              <p>Primary experience is a pure standalone PWA (installable from any browser, works fully offline after first load). Production maze generator with Easy/Medium/Hard presets, braid loops, and printable PDF export. Python CLI remains for creators making sellable themed packs.</p>
               <div>
                 <Link href="/tools/paperairplane" className="inline-block rounded bg-white/90 text-black px-4 py-2 text-sm font-medium hover:bg-white">Open PaperAirplane hub page →</Link>
                 <Link href="/tools/paperairplane/pwa" className="ml-3 inline-block rounded border border-white/30 px-4 py-2 text-sm hover:bg-white/5">Try PWA demo (hosted) →</Link>

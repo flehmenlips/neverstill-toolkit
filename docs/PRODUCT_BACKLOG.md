@@ -204,6 +204,7 @@ Convenience view only. Source of truth is the metadata on each item.
 | ID | Title | Status | Notes |
 |----|-------|--------|-------|
 | NT-001 | Finalize Stripe ops (webhook, portal, basic fulfillment) | done | Verified prod via Vercel + Stripe MCP/CLI, June 2026 |
+| NT-002 | Enhance PaperAirplane PWA with production maze generators | in-progress | Branch feat/NT-002-pwa-maze-generators |
 | NT-013 | Mobile strategy & spike for toolkit using kitchensync/mobile Expo workflow | ready | See new Vision + backlog item; leverages existing EAS / store processes |
 
 ---
@@ -240,7 +241,7 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-002 — Enhance the hosted PaperAirplane PWA (`/tools/paperairplane/pwa`) with production-grade generators and difficulty from sibling spikes
 
-`status: ready` `type: enhancement` `priority: P1` `effort: M` `areas: app/tools/paperairplane/pwa/page.tsx, app/tools/paperairplane/page.tsx (marketing), sibling spikes/PA-005-jspdf/` `added: 2026-06`
+`status: in-progress` `type: enhancement` `priority: P1` `effort: M` `areas: app/tools/paperairplane/pwa/page.tsx, app/tools/paperairplane/page.tsx (marketing), lib/paperairplane/, sibling spikes/PA-005-jspdf/` `added: 2026-06`
 
 **Why.** The current PWA demo (recursive backtracking maze + basic braid + themes + live Canvas + jsPDF export) was the PA-005 spike artifact that proved the native web direction. It is cute and works, but still "trivially easy" per original user feedback. The sibling PaperAirplane repo now has real difficulty (PA-006), braid candidates, solution validation (BFS min_path_ratio), seeded PRNG, presets, and polished render logic in `spikes/PA-005-jspdf/`. Port the good parts so the *hosted* experience (the one normal users will actually use) feels substantial and worth the Pro upsell. Keep the Python in the sibling as the creator/pack tool.
 

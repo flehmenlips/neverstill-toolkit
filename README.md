@@ -49,8 +49,8 @@ This is the single source of truth (modeled on the sibling PaperAirplane backlog
 - See `docs/DEPLOY.md` for exact project ID, DNS records, full env var list, webhook registration steps, and remaining checklist items.
 
 ### Immediate next focus areas (see full backlog for details + ACs)
-1. **NT-002 (P1)**: Enhance the hosted PWA demo with real difficulty, advanced maze logic, braid, validation, solution overlays, etc. ported from sibling `spikes/PA-005-jspdf/`.
-2. **NT-013 (P2)**: Mobile strategy & spike — define path to native iOS/Android versions of the toolkit tools (PaperAirplane, FarmForge, etc.) leveraging the existing Expo/EAS workflow, build configs, and App Store processes in the `kitchensync/mobile/mobile` repo (com.neverstill.kitchensync). See full details + ACs in `docs/PRODUCT_BACKLOG.md`.
+1. **NT-002 (P1, in progress)**: Production maze generators in the hosted PWA — difficulty presets, braid, BFS validation, seeded exports (ported from sibling `spikes/PA-005-jspdf/`).
+2. **NT-013 (P2)**: Mobile strategy & spike — native iOS/Android via kitchensync/mobile Expo workflow.
 4. Productize additional tools (FarmForge / PrepBoard / ChefScale) from marketing stubs → real hosted experiences inside the toolkit with the shared billing.
 5. PWA installability polish (manifest + service worker) so the whole hub + tools deliver on the "installable, works offline" promise.
 6. Content/SEO flywheel + expansion of "From the Farm" stories that feed the tools.
