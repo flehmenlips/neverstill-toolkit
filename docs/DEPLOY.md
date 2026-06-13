@@ -4,7 +4,7 @@
 
 | Item | Value |
 |------|-------|
-| **Production URL** | https://neverstill.dev |
+| **Production URL** | https://www.neverstill.dev (apex `neverstill.dev` redirects here) |
 | **Vercel project** | `neverstill-toolkit` (`prj_Vabg5BDhjhV2DaSUunh51IvpAyTv`) |
 | **Team** | `flehmenlips-projects` |
 | **PWA demo** | https://neverstill.dev/tools/paperairplane/pwa |
@@ -13,8 +13,8 @@
 
 | Domain | Use |
 |--------|-----|
-| **neverstill.dev** | Operator Toolkit hub + hosted PWA |
-| **www.neverstill.dev** | CNAME → Vercel (redirect to apex recommended) |
+| **neverstill.dev** | Apex; redirects to www (Vercel) |
+| **www.neverstill.dev** | Canonical Operator Toolkit hub + hosted PWA |
 | **neverstill.farm** | Ranch site (`cookbook-site-neverstill` in KitchenSync) |
 
 ## DNS (registrar for neverstill.dev)
@@ -43,7 +43,7 @@ Copy `.env.example` for local dev (use test keys locally).
 ## Stripe webhook (Dashboard)
 
 1. [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks) → **Add endpoint**
-2. **Endpoint URL:** `https://www.neverstill.dev/api/webhooks/stripe` (apex `neverstill.dev` redirects to www)
+2. **Endpoint URL:** `https://www.neverstill.dev/api/webhooks/stripe` — use the **www** host directly. Stripe does not follow redirects; do not register the apex URL even though browsers redirect apex → www.
 3. **Events:** at minimum `checkout.session.completed`
 4. Copy **Signing secret** (`whsec_...`) → `STRIPE_WEBHOOK_SECRET` in Vercel → **Redeploy**
 
@@ -72,4 +72,4 @@ See the living prioritized backlog in `docs/PRODUCT_BACKLOG.md` (especially NT-0
 - [x] Customer portal URL env var wired and visible on /account (`https://billing.stripe.com/p/login/9B69ATg468KZ7S81O21ck00`)
 - [x] Smoke: PWA PDF export; live checkout session creation (`POST /api/checkout`); webhook route returns 400 without signature (expected); portal button live on /account
 
-**Full product roadmap, vision, and next NT-xxx items:** [docs/PRODUCT_BACKLOG.md](../PRODUCT_BACKLOG.md) (includes Stripe fulfillment, PWA depth for PaperAirplane + other tools, etc.).
+**Full product roadmap, vision, and next NT-xxx items:** [docs/PRODUCT_BACKLOG.md](PRODUCT_BACKLOG.md) (includes Stripe fulfillment, PWA depth for PaperAirplane + other tools, etc.).
