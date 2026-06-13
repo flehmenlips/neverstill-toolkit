@@ -33,11 +33,15 @@ function buildConfig(params: GeneratorParams): MazeConfig {
 
 function generateFromParams(params: GeneratorParams): MazeResult | null {
   const config = buildConfig(params);
+  let best: MazeResult | null = null;
   for (let offset = 0; offset < 12; offset++) {
     const result = generateMazeGrid(config, params.seed + offset, 25);
     if (result?.meetsDifficultyTarget) return result;
+    if (result && (!best || result.stats.path_ratio > best.stats.path_ratio)) {
+      best = result;
+    }
   }
-  return generateMazeGrid(config, params.seed, 25);
+  return best;
 }
 
 export default function PaperAirplanePWA() {
