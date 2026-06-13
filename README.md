@@ -35,19 +35,34 @@ The /tools/paperairplane/pwa is the hosted PWA demo (client-side JS port of gene
 - Stripe (self-hosted): for subscriptions/one-time "Pro access" or "Toolkit Pass", with Customer Portal. Webhooks later for automated fulfillment (email keys, unlock hosted access).
 - Hybrid: Sell packs on Gumroad today for immediate revenue; use this hub + Stripe for the "app access" upsell and future recurring.
 
-## Next concrete steps (PaperAirplane + hub)
-1. ~~Deploy hub to Vercel~~ — **live at https://neverstill.dev** (see `docs/DEPLOY.md`).
-2. Finish Stripe ops: webhook + Customer Portal env vars in Vercel, then redeploy.
-3. Enhance /tools/paperairplane/pwa using logic from PaperAirplane spikes/PA-005-jspdf (advanced maze with difficulty, solution paths, etc.) for full featured hosted PWA.
-4. Generate more content on farm sites (seabreeze.farm, cookbook.farm) for SEO flywheel.
-5. Add other tools (FarmForge etc.) as their PWA/static versions ready.
-6. (Optional) Integrate more from PaperAirplane spikes (e.g. writing placeholder upgrade in PA-007).
+## Roadmap & Backlog
 
-The JS PWA in the hub now serves as the primary hosted experience, complementing the Python in PaperAirplane for creators.
+**Full prioritized backlog, vision, strategy, architecture notes, and agent process live in [docs/PRODUCT_BACKLOG.md](docs/PRODUCT_BACKLOG.md).**
 
-This setup lets us ship narrow valuable slices immediately while the hub provides the portfolio/brand/billing glue. One happy PaperAirplane customer sees FarmForge and the others.
+This is the single source of truth (modeled on the sibling PaperAirplane backlog for consistency). Use stable `NT-xxx` IDs for toolkit/hub work. PaperAirplane-specific generator and PWA fidelity work continues to be tracked in the sibling `PaperAirplane/docs/PRODUCT_BACKLOG.md` and the PA-005 plan docs.
 
-See AGENTS.md / docs in sibling projects for the development workflow used across everything.
+### Current high-level status (as of user confirmation June 2026)
+- Fully deployed on Vercel at https://neverstill.dev with custom domain.
+- Live Stripe keys + prices (paperairplane-pro $39, farmforge-pro $49, toolkit-pass $99 one-time). Smoke tests pass for real checkout session creation.
+- PWA demo live at /tools/paperairplane/pwa (Canvas + jsPDF export).
+- Basic Stripe integration (checkout forms, /api/checkout, /account success state, webhook skeleton, customer portal stub) in place.
+- See `docs/DEPLOY.md` for exact project ID, DNS records, full env var list, webhook registration steps, and remaining checklist items.
+
+### Immediate next focus areas (see full backlog for details + ACs)
+1. **NT-002 (P1)**: Enhance the hosted PWA demo with real difficulty, advanced maze logic, braid, validation, solution overlays, etc. ported from sibling `spikes/PA-005-jspdf/`.
+2. **NT-013 (P2)**: Mobile strategy & spike — define path to native iOS/Android versions of the toolkit tools (PaperAirplane, FarmForge, etc.) leveraging the existing Expo/EAS workflow, build configs, and App Store processes in the `kitchensync/mobile/mobile` repo (com.neverstill.kitchensync). See full details + ACs in `docs/PRODUCT_BACKLOG.md`.
+4. Productize additional tools (FarmForge / PrepBoard / ChefScale) from marketing stubs → real hosted experiences inside the toolkit with the shared billing.
+5. PWA installability polish (manifest + service worker) so the whole hub + tools deliver on the "installable, works offline" promise.
+6. Content/SEO flywheel + expansion of "From the Farm" stories that feed the tools.
+
+**NT-001 (Stripe ops) complete as of June 2026** — live webhook, portal URL, checkout, and account page verified on production. See `docs/DEPLOY.md` checklist.
+
+The JS PWA in the hub is the primary hosted user experience. Python CLI + batch/packs in the sibling `PaperAirplane` repo remains the creator/power tool. The hub provides the portfolio, brand, billing glue, and cross-sell so one happy customer discovers the next tool.
+
+See sibling AGENTS.md / docs for the overall development workflow (backlog-driven IDs, branch naming, gh PRs only, Bugbot until green, etc.). Local `CLAUDE.md` has Next.js-specific notes.
+
+## Deployment (operational)
+See `docs/DEPLOY.md` for the complete production runbook (env vars, DNS, Stripe Dashboard steps, post-deploy checklist). The high-level "Next concrete steps" have been moved into the living `docs/PRODUCT_BACKLOG.md`.
 
 ## Getting Started
 
