@@ -1,6 +1,21 @@
 import Link from 'next/link';
+import {
+  getPurchaserAccess,
+  hasPaperAirplanePro,
+} from '@/lib/stripe-purchases';
 
-export default function PaperAirplanePage() {
+type PaperAirplanePageProps = {
+  searchParams: Promise<{ session_id?: string }>;
+};
+
+export default async function PaperAirplanePage({ searchParams }: PaperAirplanePageProps) {
+  const { session_id } = await searchParams;
+  const access = await getPurchaserAccess(session_id);
+  const isPro = hasPaperAirplanePro(access.owned);
+  const pwaHref = session_id
+    ? `/tools/paperairplane/pwa?session_id=${encodeURIComponent(session_id)}`
+    : '/tools/paperairplane/pwa';
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <div className="mx-auto max-w-4xl px-6 py-10">
@@ -9,10 +24,30 @@ export default function PaperAirplanePage() {
         <div className="mt-6 flex items-center gap-4">
           <span className="text-5xl">✈️</span>
           <div>
-            <h1 className="text-5xl font-semibold tracking-tighter">PaperAirplane</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-5xl font-semibold tracking-tighter">PaperAirplane</h1>
+              {isPro && (
+                <span className="rounded-full border border-emerald-500/40 bg-emerald-950/50 px-3 py-1 text-xs font-medium uppercase tracking-widest text-emerald-200">
+                  Pro
+                </span>
+              )}
+            </div>
             <p className="text-white/60 mt-1">Personalized printable worksheets for kids 1–8+</p>
           </div>
         </div>
+
+        {isPro && (
+          <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 p-4 text-sm text-emerald-100">
+            <p className="font-medium">Pro access granted</p>
+            <p className="mt-1 text-emerald-100/80">
+              Your hosted PWA unlocks larger maze sizes and the solution-path overlay. Open the PWA with
+              your purchase linked below.
+            </p>
+            <Link href={pwaHref} className="mt-3 inline-block text-xs underline hover:text-emerald-50">
+              Open Pro-enabled PWA →
+            </Link>
+          </div>
+        )}
 
         <div className="mt-8 grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6 text-lg text-white/80">
@@ -62,13 +97,16 @@ export default function PaperAirplanePage() {
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Try it now</div>
-              <a href="/tools/paperairplane/pwa" className="block mt-1 underline">Try the hosted maze PWA (difficulty presets, PDF export)</a>
+              <a href={pwaHref} className="block mt-1 underline">Try the hosted maze PWA (difficulty presets, PDF export)</a>
               <a href="https://github.com/flehmenlips/PaperAirplane" target="_blank" className="block mt-1 underline">GitHub (Python local + packs for creators)</a>
               <p className="text-white/50 text-xs mt-1">PWA is the primary user experience; Python for batch/packs.</p>
             </div>
             <div>
               <div className="uppercase text-[10px] tracking-widest text-white/50">Hosted PWA (Pro)</div>
-              <p className="text-white/60">Full featured PWA (larger sizes, solution overlay, more generators). Pro unlocks via Stripe below.</p>
+              <p className="text-white/60">
+                Pro unlocks larger maze sizes (up to 28×28) and the solution-path overlay in the hosted PWA.
+                Verified via Stripe on /account after checkout.
+              </p>
             </div>
             <div className="pt-3 border-t border-white/10 text-xs text-white/50">
               Part of the Neverstill Operator Toolkit. One account, shared portal, cross-promotion to FarmForge forecasting, chef tools, etc.

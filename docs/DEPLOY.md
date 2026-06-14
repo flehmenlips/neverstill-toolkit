@@ -47,7 +47,20 @@ Copy `.env.example` for local dev (use test keys locally).
 3. **Events:** at minimum `checkout.session.completed`
 4. Copy **Signing secret** (`whsec_...`) → `STRIPE_WEBHOOK_SECRET` in Vercel → **Redeploy**
 
-The route verifies signatures and logs completed checkouts; extend for license keys / Pro unlock fulfillment.
+The route verifies signatures, logs completed checkouts, and emits structured `purchase_record` JSON for fulfillment. Purchases are re-fetched on `/account` and `/api/pro-status` via the Stripe API (no separate DB).
+
+## Pro fulfillment (NT-005)
+
+After `checkout.session.completed`:
+
+1. Webhook logs a structured `purchase_record` (session, product, customer, livemode).
+2. `/account?session_id=cs_...` shows per-product Pro status and links to unlocked tools.
+3. `/api/pro-status?session_id=cs_...` verifies PaperAirplane Pro server-side for the PWA.
+4. PaperAirplane PWA Pro unlocks: larger mazes (up to 28×28) and solution-path overlay.
+
+**Returning purchasers without `session_id`:** Use the Stripe Customer Portal for receipts. Re-open tools from the post-checkout /account link (bookmark or email). Customer lookup on /account requires `session_id` on first visit after checkout so Stripe customer ID can be resolved.
+
+**Test vs live:** Local dev uses test Stripe keys; production uses live keys. Mode is shown on /account and derived from session `livemode`.
 
 ## Stripe Customer Portal
 

@@ -79,12 +79,14 @@ export function resolveMazeConfig(input: {
   height?: number;
   braid?: number;
   min_path_ratio?: number;
+  maxSize?: number;
 }): MazeConfig {
   const difficulty = input.difficulty ?? 'medium';
   const defaults = DIFFICULTY_DEFAULTS[difficulty] ?? DIFFICULTY_DEFAULTS.medium;
+  const maxSize = input.maxSize ?? 20;
   return {
-    width: Math.max(4, Math.min(20, input.width ?? defaults.width)),
-    height: Math.max(4, Math.min(20, input.height ?? defaults.height)),
+    width: Math.max(4, Math.min(maxSize, input.width ?? defaults.width)),
+    height: Math.max(4, Math.min(maxSize, input.height ?? defaults.height)),
     braid: Math.max(0, Math.min(0.35, input.braid ?? defaults.braid)),
     min_path_ratio: Math.max(0.1, Math.min(1, input.min_path_ratio ?? defaults.min_path_ratio)),
     difficulty,
