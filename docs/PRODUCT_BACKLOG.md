@@ -204,7 +204,8 @@ Convenience view only. Source of truth is the metadata on each item.
 | ID | Title | Status | Notes |
 |----|-------|--------|-------|
 | NT-001 | Finalize Stripe ops (webhook, portal, basic fulfillment) | done | Verified prod via Vercel + Stripe MCP/CLI, June 2026 |
-| NT-002 | Enhance PaperAirplane PWA with production maze generators | in-progress | Branch feat/NT-002-pwa-maze-generators |
+| NT-002 | Enhance PaperAirplane PWA with production maze generators | done | PR #6 merged 2026-06 |
+| NT-004 | PWA manifest + service worker (installable, offline) | in-progress | Branch feat/NT-004-pwa-install |
 | NT-005 | Expand webhook fulfillment and account Pro unlocks | done | PR #8 merged 2026-06-13 |
 
 ---
@@ -241,19 +242,19 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-002 — Enhance the hosted PaperAirplane PWA (`/tools/paperairplane/pwa`) with production-grade generators and difficulty from sibling spikes
 
-`status: in-progress` `type: enhancement` `priority: P1` `effort: M` `areas: app/tools/paperairplane/pwa/page.tsx, app/tools/paperairplane/page.tsx (marketing), lib/paperairplane/, sibling spikes/PA-005-jspdf/` `added: 2026-06`
+`status: done` `merged: 2026-06-13` `type: enhancement` `priority: P1` `effort: M` `areas: app/tools/paperairplane/pwa/page.tsx, app/tools/paperairplane/page.tsx (marketing), lib/paperairplane/, sibling spikes/PA-005-jspdf/` `added: 2026-06`
 
 **Why.** The current PWA demo (recursive backtracking maze + basic braid + themes + live Canvas + jsPDF export) was the PA-005 spike artifact that proved the native web direction. It is cute and works, but still "trivially easy" per original user feedback. The sibling PaperAirplane repo now has real difficulty (PA-006), braid candidates, solution validation (BFS min_path_ratio), seeded PRNG, presets, and polished render logic in `spikes/PA-005-jspdf/`. Port the good parts so the *hosted* experience (the one normal users will actually use) feels substantial and worth the Pro upsell. Keep the Python in the sibling as the creator/pack tool.
 
 **Acceptance criteria.**
-- [ ] Port core algorithms: `carvePerfectMaze` (or equivalent recursive backtrack), `applyBraid` (with proper candidate selection), BFS solution validation, `resolveMazeConfig` / difficulty presets, Mulberry32 or equivalent seeded randomness so exports are reproducible when desired.
-- [ ] UI/params: expose width/height, braid probability (or difficulty presets: Easy/Medium/Hard), theme. Live update of the canvas on change (config object pattern already in place — preserve the "no stale sliders" behavior).
-- [ ] Rendering: support both dark (UI preview) and light (printable export) styles cleanly (offscreen canvas for export already exists — extend it). Add optional solution path overlay (dashed or colored) for Pro or as a toggle.
-- [ ] Fidelity & validation: generated mazes have unique solution; effective difficulty matches the Python/ spike expectations (use min_path_ratio or similar guard); exports look good when printed (thick child-friendly walls, GO/FIN, no clipping, proper margins).
-- [ ] Marketing page and hub card updated to reflect the improved capabilities (remove "spike in progress" language; highlight new features).
-- [ ] No regression on existing export/PDF flow or theme deco.
-- [ ] Manual test: generate several sizes + braid levels + themes; export PDFs; spot-check a few on paper or against sibling golden samples if available.
-- [ ] Update this backlog item + README references + any comments in the pwa/ code. Cross-link to sibling `spikes/PA-005-jspdf/maze-logic.js` and `render.js`.
+- [x] Port core algorithms: `carvePerfectMaze` (or equivalent recursive backtrack), `applyBraid` (with proper candidate selection), BFS solution validation, `resolveMazeConfig` / difficulty presets, Mulberry32 or equivalent seeded randomness so exports are reproducible when desired.
+- [x] UI/params: expose width/height, braid probability (or difficulty presets: Easy/Medium/Hard), theme. Live update of the canvas on change (config object pattern already in place — preserve the "no stale sliders" behavior).
+- [x] Rendering: support both dark (UI preview) and light (printable export) styles cleanly (offscreen canvas for export already exists — extend it). Add optional solution path overlay (dashed or colored) for Pro or as a toggle.
+- [x] Fidelity & validation: generated mazes have unique solution; effective difficulty matches the Python/ spike expectations (use min_path_ratio or similar guard); exports look good when printed (thick child-friendly walls, GO/FIN, no clipping, proper margins).
+- [x] Marketing page and hub card updated to reflect the improved capabilities (remove "spike in progress" language; highlight new features).
+- [x] No regression on existing export/PDF flow or theme deco.
+- [x] Manual test: generate several sizes + braid levels + themes; export PDFs; spot-check a few on paper or against sibling golden samples if available.
+- [x] Update this backlog item + README references + any comments in the pwa/ code. Cross-link to sibling `spikes/PA-005-jspdf/maze-logic.js` and `render.js`.
 
 **Hints / references.**
 - See sibling `spikes/PA-005-jspdf/maze-logic.js`, `render.js`, and the golden samples.
@@ -281,7 +282,7 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-004 — Make the toolkit (and individual tool PWAs) a proper installable PWA with offline support
 
-`status: idea` `type: enhancement` `priority: P2` `effort: S` `areas: app/, public/, next.config, manifest, service worker` `added: 2026-06`
+`status: in-progress` `type: enhancement` `priority: P1` `effort: S` `areas: app/, public/, next.config, manifest, service worker` `added: 2026-06`
 
 **Why.** The PaperAirplane PWA demo already advertises "installable + offline after load." The hub itself and the other tool pages should deliver on the promise with a real web app manifest (name, icons, start_url, display: standalone, etc.), a service worker (for offline caching of the shell + static assets), and nice install prompts. This is table stakes for the "pure standalone PWA" positioning.
 
@@ -436,6 +437,7 @@ The ACs below are written to force explicit evaluation of these options during t
 Items here are for history. Do not pick up.
 
 - **NT-001** — Finalize live Stripe webhook registration, customer portal, and basic fulfillment path (`merged: 2026-06-13`). See `docs/DEPLOY.md` checklist and PR for verification commit.
+- **NT-002** — Production maze generators in hosted PaperAirplane PWA (`merged: 2026-06-13`). PR #6 — `lib/paperairplane/maze-logic.ts`, difficulty presets, braid, BFS validation, seeded exports, Pro solution overlay.
 - **NT-005** — Expand webhook fulfillment and account Pro unlocks (`merged: 2026-06-13`). PR #8 — purchase_record webhook logging, /account Pro status, /api/pro-status, PaperAirplane PWA 28×28 + solution path gates.
 - Initial hub scaffold + PaperAirplane PWA spike (PA-005 context) + Bugbot fixes + first deploy to neverstill.dev + live Stripe prices (largely complete before/around the creation of this doc; tracked as the foundation for NT-001 onward). See GitHub PR history for the toolkit repo and sibling spikes/PA-005 results.
 
