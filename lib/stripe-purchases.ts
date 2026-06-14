@@ -67,10 +67,32 @@ export function ownedFromProduct(product: CheckoutProduct): OwnedProducts {
   return { ...EMPTY_OWNED, [product]: true };
 }
 
+const SESSION_EXPAND = ['line_items', 'payment_intent.latest_charge'] as const;
+
+export function isSessionRefunded(session: Stripe.Checkout.Session): boolean {
+  const paymentIntent = session.payment_intent;
+  if (!paymentIntent || typeof paymentIntent === 'string') return false;
+
+  const charge = paymentIntent.latest_charge;
+  if (!charge || typeof charge === 'string') return false;
+
+  return charge.refunded === true || (charge.amount_refunded ?? 0) > 0;
+}
+
+/** True when a checkout session should grant toolkit Pro access. */
+export function sessionGrantsAccess(session: Stripe.Checkout.Session): boolean {
+  if (session.payment_status !== 'paid') return false;
+  if (isSessionRefunded(session)) return false;
+  return resolveProductFromSession(session) !== null;
+}
+
 export function purchaseRecordFromSession(
   session: Stripe.Checkout.Session,
   livemode: boolean,
 ): PurchaseRecord | null {
+  if (session.payment_status !== 'paid') return null;
+  if (isSessionRefunded(session)) return null;
+
   const product = resolveProductFromSession(session);
   if (!product) return null;
 
@@ -112,7 +134,7 @@ function resolveProductFromSession(session: Stripe.Checkout.Session): CheckoutPr
 }
 
 function ownedFromPaidSession(session: Stripe.Checkout.Session): OwnedProducts {
-  if (session.payment_status !== 'paid') return { ...EMPTY_OWNED };
+  if (!sessionGrantsAccess(session)) return { ...EMPTY_OWNED };
   const product = resolveProductFromSession(session);
   return product ? ownedFromProduct(product) : { ...EMPTY_OWNED };
 }
@@ -134,21 +156,19 @@ export async function getPurchaserAccess(sessionId?: string): Promise<PurchaserA
   try {
     const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
-      expand: ['line_items'],
+      expand: [...SESSION_EXPAND],
     });
-
-    if (session.payment_status !== 'paid') {
-      return result;
-    }
 
     result.livemode = session.livemode;
     result.customerId = resolveCustomerId(session);
     result.customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
 
-    const sessionRecord = purchaseRecordFromSession(session, session.livemode);
-    if (sessionRecord) {
-      result.purchases.push(sessionRecord);
-      result.owned = mergeOwnedProducts(result.owned, ownedFromProduct(sessionRecord.product));
+    if (sessionGrantsAccess(session)) {
+      const sessionRecord = purchaseRecordFromSession(session, session.livemode);
+      if (sessionRecord) {
+        result.purchases.push(sessionRecord);
+        result.owned = mergeOwnedProducts(result.owned, ownedFromProduct(sessionRecord.product));
+      }
     }
 
     if (result.customerId) {
@@ -180,11 +200,11 @@ export async function getPurchaserAccessForCustomer(customerId: string): Promise
       customer: customerId,
       status: 'complete',
       limit: 100,
-      expand: ['data.line_items'],
+      expand: ['data.line_items', 'data.payment_intent.latest_charge'],
     });
 
     for (const session of sessions.data) {
-      if (session.payment_status !== 'paid') continue;
+      if (!sessionGrantsAccess(session)) continue;
 
       const record = purchaseRecordFromSession(session, session.livemode);
       if (!record) continue;

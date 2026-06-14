@@ -52,11 +52,18 @@ export async function POST(request: Request) {
           }),
         );
       } else {
+        const reason =
+          session.payment_status !== 'paid'
+            ? 'unpaid'
+            : session.metadata?.product
+              ? 'unknown_product'
+              : 'unknown_product_or_unpaid';
+
         console.warn(
           '[stripe webhook] purchase_record_skipped',
           JSON.stringify({
             sessionId: session.id,
-            reason: 'unknown_product_or_unpaid',
+            reason,
             paymentStatus: session.payment_status,
             metadataProduct: session.metadata?.product ?? null,
           }),

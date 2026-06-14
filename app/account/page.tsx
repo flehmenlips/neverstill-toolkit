@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { verifyCheckoutSession } from '@/lib/verify-checkout-session';
 import {
   type CheckoutProduct,
   PRODUCT_LABELS,
@@ -50,7 +49,6 @@ function formatAmount(amountTotal: number | null, currency: string | null): stri
 
 export default async function AccountPage({ searchParams }: AccountPageProps) {
   const { session_id } = await searchParams;
-  const purchaseComplete = await verifyCheckoutSession(session_id);
   const access = await getPurchaserAccess(session_id);
   const portalUrl = process.env.NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL_URL;
   const hasAnyOwned = PRODUCT_ORDER.some((product) => access.owned[product]);
@@ -68,7 +66,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           Manage toolkit access, downloads, and Stripe purchases in one place.
         </p>
 
-        {purchaseComplete && (
+        {session_id && hasAnyOwned && (
           <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-sm text-emerald-100">
             <p className="font-medium">Thank you — payment received.</p>
             <p className="mt-1 text-emerald-100/80">
