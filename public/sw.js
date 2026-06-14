@@ -5,7 +5,6 @@ const PRECACHE_URLS = [
   '/',
   '/tools/paperairplane',
   '/tools/paperairplane/pwa',
-  '/account',
   '/offline',
 ];
 
@@ -49,10 +48,11 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/') || url.pathname === '/sw.js') return;
 
   if (request.mode === 'navigate') {
+    const skipShellCache = url.pathname.startsWith('/account');
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (response.ok && !skipShellCache) {
             const copy = response.clone();
             caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
           }

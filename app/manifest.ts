@@ -43,8 +43,8 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         name: 'Shop Packs',
         short_name: 'Shop',
-        url: 'https://neverstill.gumroad.com/l/mvwhj',
-        description: 'PaperAirplane starter pack on Gumroad.',
+        url: '/tools/paperairplane',
+        description: 'PaperAirplane packs and Pro access.',
       },
     ],
   };
