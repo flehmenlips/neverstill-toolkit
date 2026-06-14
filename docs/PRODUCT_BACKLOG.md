@@ -126,7 +126,7 @@ Read this section **once per session** before you touch any backlog item.
 - **Key pages live**: Hub, PaperAirplane marketing + PWA, FarmForge, PrepBoard, ChefScale (stubs with CTAs), /account (success + portal stub), /api/checkout, basic Stripe webhook.
 - **Deploy docs**: See `docs/DEPLOY.md` (DNS, env vars, webhook registration steps, customer portal setup).
 - **Monetization live**: Gumroad (https://neverstill.gumroad.com/l/mvwhj) + direct Stripe via hub forms.
-- **Gaps still open** (see backlog): PWA enhancements (NT-002), hosted depth for the other three tools, installability polish (NT-004), persistent purchase storage beyond Stripe lookup (future).
+- **Gaps still open** (see backlog): hosted depth for the other three tools, persistent purchase storage beyond Stripe lookup (future).
 - **Mobile path**: Planned via kitchensync/mobile/mobile Expo workflow (see NT-013 and Vision section above). No native builds or store listings for toolkit tools yet; web/PWA is the current distribution. FarmForge integration is already happening in the broader kitchensync platform (web + mobile ledgers).
 
 The initial "hub scaffold + PaperAirplane PWA spike" work (PA-005 in sibling + toolkit PR#1) is complete and merged. Deploy is complete (per user confirmation + `docs/DEPLOY.md`).
@@ -205,7 +205,7 @@ Convenience view only. Source of truth is the metadata on each item.
 |----|-------|--------|-------|
 | NT-001 | Finalize Stripe ops (webhook, portal, basic fulfillment) | done | Verified prod via Vercel + Stripe MCP/CLI, June 2026 |
 | NT-002 | Enhance PaperAirplane PWA with production maze generators | done | PR #6 merged 2026-06 |
-| NT-004 | PWA manifest + service worker (installable, offline) | in-progress | Branch feat/NT-004-pwa-install |
+| NT-004 | PWA manifest + service worker (installable, offline) | done | PR #10 merged 2026-06-14 |
 | NT-005 | Expand webhook fulfillment and account Pro unlocks | done | PR #8 merged 2026-06-13 |
 
 ---
@@ -282,17 +282,17 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-004 — Make the toolkit (and individual tool PWAs) a proper installable PWA with offline support
 
-`status: in-progress` `type: enhancement` `priority: P1` `effort: S` `areas: app/, public/, next.config, manifest, service worker` `added: 2026-06`
+`status: done` `merged: 2026-06-14` `type: enhancement` `priority: P1` `effort: S` `areas: app/, public/, next.config, manifest, service worker` `added: 2026-06`
 
 **Why.** The PaperAirplane PWA demo already advertises "installable + offline after load." The hub itself and the other tool pages should deliver on the promise with a real web app manifest (name, icons, start_url, display: standalone, etc.), a service worker (for offline caching of the shell + static assets), and nice install prompts. This is table stakes for the "pure standalone PWA" positioning.
 
 **Acceptance criteria.**
-- [ ] `public/manifest.json` (or equivalent via next-pwa or manual) with correct icons (use existing public/ svgs or add pngs), theme color, etc.
-- [ ] Service worker registered that caches the app shell and key routes/assets so the hub + at least the PaperAirplane PWA demo works offline after first load.
-- [ ] `next.config.ts` or layout updates for proper PWA headers / scope if needed.
-- [ ] Test: "Add to Home Screen" / install prompt appears in Chrome/Safari on mobile + desktop; installed app launches to the hub or a tool; basic offline navigation works.
-- [ ] Update marketing copy and hub to call out "Installable PWAs — works offline".
-- [ ] No breakage to existing Stripe flows or server routes.
+- [x] `public/manifest.json` (or equivalent via next-pwa or manual) with correct icons (use existing public/ svgs or add pngs), theme color, etc.
+- [x] Service worker registered that caches the app shell and key routes/assets so the hub + at least the PaperAirplane PWA demo works offline after first load.
+- [x] `next.config.ts` or layout updates for proper PWA headers / scope if needed.
+- [x] Test: "Add to Home Screen" / install prompt appears in Chrome/Safari on mobile + desktop; installed app launches to the hub or a tool; basic offline navigation works.
+- [x] Update marketing copy and hub to call out "Installable PWAs — works offline".
+- [x] No breakage to existing Stripe flows or server routes.
 
 ### NT-005 — Expand webhook fulfillment and account page to deliver real Pro value / unlocks
 
@@ -439,6 +439,7 @@ Items here are for history. Do not pick up.
 - **NT-001** — Finalize live Stripe webhook registration, customer portal, and basic fulfillment path (`merged: 2026-06-13`). See `docs/DEPLOY.md` checklist and PR for verification commit.
 - **NT-002** — Production maze generators in hosted PaperAirplane PWA (`merged: 2026-06-13`). PR #6 — `lib/paperairplane/maze-logic.ts`, difficulty presets, braid, BFS validation, seeded exports, Pro solution overlay.
 - **NT-005** — Expand webhook fulfillment and account Pro unlocks (`merged: 2026-06-13`). PR #8 — purchase_record webhook logging, /account Pro status, /api/pro-status, PaperAirplane PWA 28×28 + solution path gates.
+- **NT-004** — PWA manifest, service worker, and offline shell (`merged: 2026-06-14`). PR #10 — `app/manifest.ts`, `public/sw.js`, `PwaRegister`, precached hub + PaperAirplane routes, `/offline` fallback.
 - Initial hub scaffold + PaperAirplane PWA spike (PA-005 context) + Bugbot fixes + first deploy to neverstill.dev + live Stripe prices (largely complete before/around the creation of this doc; tracked as the foundation for NT-001 onward). See GitHub PR history for the toolkit repo and sibling spikes/PA-005 results.
 
 ---
