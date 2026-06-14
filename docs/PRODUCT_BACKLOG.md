@@ -205,7 +205,7 @@ Convenience view only. Source of truth is the metadata on each item.
 |----|-------|--------|-------|
 | NT-001 | Finalize Stripe ops (webhook, portal, basic fulfillment) | done | Verified prod via Vercel + Stripe MCP/CLI, June 2026 |
 | NT-002 | Enhance PaperAirplane PWA with production maze generators | in-progress | Branch feat/NT-002-pwa-maze-generators |
-| NT-013 | Mobile strategy & spike for toolkit using kitchensync/mobile Expo workflow | ready | See new Vision + backlog item; leverages existing EAS / store processes |
+| NT-005 | Expand webhook fulfillment and account Pro unlocks | in-progress | Branch feat/NT-005-stripe-fulfillment |
 
 ---
 
@@ -295,7 +295,7 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-005 — Expand webhook fulfillment and account page to deliver real Pro value / unlocks
 
-`status: idea` `type: feature` `priority: P2` `effort: M` `areas: app/api/webhooks/stripe/, app/account/, lib/, possibly a simple license or flag system` `added: 2026-06`
+`status: in-progress` `type: feature` `priority: P2` `effort: M` `areas: app/api/webhooks/stripe/, app/account/, lib/, possibly a simple license or flag system` `added: 2026-06`
 
 **Why.** "Future: download links for Pro unlocks and license keys" appears in the account page and DEPLOY.md. For PaperAirplane Pro (and future Pro purchases), purchasers should get something tangible beyond the Stripe receipt and portal — e.g. a note that their Gumroad packs include lifetime updates, a displayed "Pro access granted" state for the hosted PWA features, or actual license keys / download links for digital goods. This turns one-time Stripe purchases into perceived ongoing value and reduces support load.
 
