@@ -1,11 +1,15 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   fetchProStatus,
   type ProAccessSource,
 } from '@/lib/persistent-pro-status';
+import {
+  getSavedStripeCustomerSnapshot,
+  subscribeStripeCustomerStorage,
+} from '@/lib/stripe-customer-storage';
 
 type PaperAirplaneProClientProps = {
   sessionIsPro: boolean;
@@ -19,6 +23,20 @@ type CachedProStatus = {
 };
 
 const proStatusRequests = new Map<string, Promise<CachedProStatus>>();
+
+if (typeof window !== 'undefined') {
+  subscribeStripeCustomerStorage(() => {
+    proStatusRequests.clear();
+  });
+}
+
+function useSavedCustomerSnapshot(): string | null {
+  return useSyncExternalStore(
+    subscribeStripeCustomerStorage,
+    getSavedStripeCustomerSnapshot,
+    () => null,
+  );
+}
 
 function loadPaperAirplaneProStatus(
   sessionIsPro: boolean,
@@ -48,21 +66,22 @@ export function PaperAirplaneProBadge({
   sessionId,
 }: Pick<PaperAirplaneProClientProps, 'sessionIsPro' | 'sessionId'>) {
   const [localStoragePro, setLocalStoragePro] = useState(false);
+  const savedCustomerSnapshot = useSavedCustomerSnapshot();
 
   useEffect(() => {
     if (sessionIsPro) return;
 
     let cancelled = false;
     loadPaperAirplaneProStatus(sessionIsPro, sessionId).then(({ isPro }) => {
-      if (!cancelled && isPro) {
-        setLocalStoragePro(true);
+      if (!cancelled) {
+        setLocalStoragePro(isPro);
       }
     });
 
     return () => {
       cancelled = true;
     };
-  }, [sessionIsPro, sessionId]);
+  }, [sessionIsPro, sessionId, savedCustomerSnapshot]);
 
   if (!sessionIsPro && !localStoragePro) return null;
 
@@ -80,21 +99,22 @@ export function PaperAirplaneProAccessBanner({
 }: PaperAirplaneProClientProps) {
   const [localStoragePro, setLocalStoragePro] = useState(false);
   const [accessSource, setAccessSource] = useState<ProAccessSource>(null);
+  const savedCustomerSnapshot = useSavedCustomerSnapshot();
 
   useEffect(() => {
     if (sessionIsPro) return;
 
     let cancelled = false;
     loadPaperAirplaneProStatus(sessionIsPro, sessionId).then(({ isPro, source }) => {
-      if (cancelled || !isPro) return;
-      setLocalStoragePro(true);
-      setAccessSource(source);
+      if (cancelled) return;
+      setLocalStoragePro(isPro);
+      setAccessSource(isPro ? source : null);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [sessionIsPro, sessionId]);
+  }, [sessionIsPro, sessionId, savedCustomerSnapshot]);
 
   const isPro = sessionIsPro || localStoragePro;
   const displaySource: ProAccessSource =
