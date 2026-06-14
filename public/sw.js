@@ -77,17 +77,19 @@ self.addEventListener('fetch', (event) => {
     url.pathname.endsWith('.woff2')
   ) {
     event.respondWith(
-      caches.match(request).then(
+      caches.match(request, { ignoreVary: true }).then(
         (cached) =>
           cached ??
-          fetch(request).then(async (response) => {
-            if (response.ok) {
-              const copy = response.clone();
-              const cache = await caches.open(STATIC_CACHE);
-              await cache.put(request, copy);
-            }
-            return response;
-          }),
+          fetch(request)
+            .then(async (response) => {
+              if (response.ok) {
+                const copy = response.clone();
+                const cache = await caches.open(STATIC_CACHE);
+                await cache.put(request, copy);
+              }
+              return response;
+            })
+            .catch(() => Response.error()),
       ),
     );
   }
