@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 export default function OfflinePage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-6">
@@ -11,15 +9,17 @@ export default function OfflinePage() {
           checkout.
         </p>
         <div className="mt-6 flex flex-col gap-2 text-sm">
-          <Link href="/" className="rounded bg-white text-black py-2 font-medium hover:bg-white/90">
+          {/* Full document navigation so precached shell pages work offline (not RSC via Link). */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/" className="rounded bg-white text-black py-2 font-medium hover:bg-white/90">
             Toolkit home
-          </Link>
-          <Link
+          </a>
+          <a
             href="/tools/paperairplane/pwa"
             className="rounded border border-white/30 py-2 hover:bg-white/5"
           >
             PaperAirplane mazes
-          </Link>
+          </a>
         </div>
       </div>
     </div>
