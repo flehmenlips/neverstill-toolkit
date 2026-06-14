@@ -14,8 +14,18 @@ function notifyStripeCustomerStorageChange(): void {
 export function subscribeStripeCustomerStorage(onStoreChange: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
 
+  const handleCrossTabStorage = (event: StorageEvent) => {
+    if (event.key === STRIPE_CUSTOMER_STORAGE_KEY || event.key === null) {
+      onStoreChange();
+    }
+  };
+
   window.addEventListener(STRIPE_CUSTOMER_STORAGE_EVENT, onStoreChange);
-  return () => window.removeEventListener(STRIPE_CUSTOMER_STORAGE_EVENT, onStoreChange);
+  window.addEventListener('storage', handleCrossTabStorage);
+  return () => {
+    window.removeEventListener(STRIPE_CUSTOMER_STORAGE_EVENT, onStoreChange);
+    window.removeEventListener('storage', handleCrossTabStorage);
+  };
 }
 
 export function getSavedStripeCustomerSnapshot(): string | null {
