@@ -4,6 +4,10 @@ import {
   PRODUCT_LABELS,
   getPurchaserAccess,
 } from '@/lib/stripe-purchases';
+import {
+  AccountClearSavedAccess,
+  AccountSaveCustomerAccess,
+} from './account-persistent-access';
 
 type AccountPageProps = {
   searchParams: Promise<{ success?: string; session_id?: string }>;
@@ -57,6 +61,10 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white p-6">
+      <AccountSaveCustomerAccess
+        customerId={access.customerId}
+        sessionGrantsAccess={access.sessionGrantsAccess}
+      />
       <div className="max-w-md mx-auto">
         <Link href="/" className="text-sm text-white/50 hover:text-white">
           ← Toolkit
@@ -166,9 +174,9 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
           {!session_id && (
             <p className="mt-4 text-xs text-white/50">
-              Returning without a checkout session? Use the Stripe Customer Portal for receipts and
-              billing history. Re-open a tool from your purchase confirmation email, or buy again with
-              the same email to link purchases.
+              Returning without a checkout session? Pro access can be saved on this device after checkout — use
+              the clear control below if you need to reset it. For receipts and billing history, use the
+              Stripe Customer Portal.
             </p>
           )}
         </div>
@@ -198,6 +206,8 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </p>
           )}
         </div>
+
+        <AccountClearSavedAccess />
 
         <p className="mt-6 text-xs text-white/40 text-center">
           Questions? Use your purchase receipt or the Gumroad store.

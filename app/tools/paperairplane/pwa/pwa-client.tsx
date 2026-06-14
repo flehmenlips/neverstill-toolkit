@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import jsPDF from 'jspdf';
 import {
   DIFFICULTY_DEFAULTS,
@@ -14,15 +14,20 @@ import {
   type MazeResult,
 } from '@/lib/paperairplane/maze-logic';
 import { drawMazeToCanvas, type Theme } from '@/lib/paperairplane/maze-render';
+import {
+  fetchProStatus,
+  type ProAccessSource,
+  type ProStatusResponse,
+} from '@/lib/persistent-pro-status';
+import {
+  getSavedStripeCustomerSnapshot,
+  subscribeStripeCustomerStorage,
+} from '@/lib/stripe-customer-storage';
 
 const FREE_MAX_SIZE = 16;
 const PRO_MAX_SIZE = 28;
 
-type ProStatus = {
-  paperAirplanePro: boolean;
-  livemode: boolean | null;
-  verified: boolean;
-};
+type ProStatus = ProStatusResponse;
 
 type GeneratorParams = {
   difficulty: Difficulty;
@@ -63,14 +68,24 @@ function generateFromParams(params: GeneratorParams, maxSize: number): MazeResul
   return best;
 }
 
+function useSavedCustomerSnapshot(): string | null {
+  return useSyncExternalStore(
+    subscribeStripeCustomerStorage,
+    getSavedStripeCustomerSnapshot,
+    () => null,
+  );
+}
+
 export default function PaperAirplanePwaClient() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const savedCustomerSnapshot = useSavedCustomerSnapshot();
   const [proStatus, setProStatus] = useState<ProStatus>({
     paperAirplanePro: false,
     livemode: null,
     verified: false,
   });
+  const [proAccessSource, setProAccessSource] = useState<ProAccessSource>(null);
   const [params, setParams] = useState<GeneratorParams>({
     difficulty: 'medium',
     width: DIFFICULTY_DEFAULTS.medium.width,
@@ -83,36 +98,39 @@ export default function PaperAirplanePwaClient() {
   const [mazeResult, setMazeResult] = useState<MazeResult | null>(null);
   const [seedInput, setSeedInput] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isPro = proStatus.paperAirplanePro;
+  const canHavePersistedPro = Boolean(sessionId?.startsWith('cs_') || savedCustomerSnapshot);
+  const isPro = canHavePersistedPro && proStatus.paperAirplanePro;
   const maxSize = isPro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
 
   useEffect(() => {
-    const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : '';
     let cancelled = false;
 
-    fetch(`/api/pro-status${query}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: ProStatus | null) => {
-        if (!cancelled && data) {
-          const nextMax = data.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
-          setProStatus(data);
-          setParams((prev) => {
-            const updated = clampParams(prev, nextMax);
-            setMazeResult(generateFromParams(updated, nextMax));
-            return updated;
-          });
-        }
+    fetchProStatus(sessionId)
+      .then(({ data, source }) => {
+        if (cancelled) return;
+
+        const nextMax = data?.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
+        setProStatus(
+          data ?? { paperAirplanePro: false, livemode: null, verified: false },
+        );
+        setProAccessSource(source);
+        setParams((prev) => {
+          const updated = clampParams(prev, nextMax);
+          setMazeResult(generateFromParams(updated, nextMax));
+          return updated;
+        });
       })
       .catch(() => {
         if (!cancelled) {
           setProStatus({ paperAirplanePro: false, livemode: null, verified: false });
+          setProAccessSource(null);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, savedCustomerSnapshot]);
 
   const effectiveShowSolution = isPro && showSolution;
 
@@ -128,7 +146,7 @@ export default function PaperAirplanePwaClient() {
       setParams(updated);
       setMazeResult(generateFromParams(updated, maxSize));
     }
-  }, [maxSize]);
+  }, [maxSize, setMazeResult, setParams]);
 
   const setDifficulty = useCallback(
     (difficulty: Difficulty) => {
@@ -148,7 +166,7 @@ export default function PaperAirplanePwaClient() {
     const nextSeed = randomSeed();
     setSeedInput(String(nextSeed));
     applyParams((prev) => ({ ...prev, seed: nextSeed }));
-  }, [applyParams]);
+  }, [applyParams, setSeedInput]);
 
   const applySeedFromInput = useCallback(() => {
     const parsed = Number.parseInt(seedInput, 10);
@@ -277,6 +295,16 @@ export default function PaperAirplanePwaClient() {
           <div className="mt-4 text-sm text-emerald-100 bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-xl">
             Pro access active — larger sizes (up to {PRO_MAX_SIZE}×{PRO_MAX_SIZE}) and solution-path overlay
             unlocked.
+            {proAccessSource === 'saved-customer' && (
+              <span className="block mt-1 text-xs text-emerald-100/70">
+                Restored from saved access on this device — verified server-side with Stripe.
+              </span>
+            )}
+            {proAccessSource === 'session' && (
+              <span className="block mt-1 text-xs text-emerald-100/70">
+                Linked from checkout session — access saved on this device for return visits.
+              </span>
+            )}
             {proStatus.livemode === false && (
               <span className="block mt-1 text-xs text-emerald-100/70">Stripe test mode purchase</span>
             )}
@@ -287,8 +315,11 @@ export default function PaperAirplanePwaClient() {
             <Link href="/tools/paperairplane" className="underline hover:text-white">
               Buy PaperAirplane Pro
             </Link>{' '}
-            for larger sizes and solution-path overlay. After checkout, return via /account with your session
-            linked.
+            for larger sizes and solution-path overlay. After checkout, visit{' '}
+            <Link href="/account" className="underline hover:text-white">
+              /account
+            </Link>{' '}
+            once to save Pro access on this device.
           </div>
         )}
 
