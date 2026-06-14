@@ -90,7 +90,9 @@ export default function NeverstillToolkit() {
             <input type="hidden" name="product" value="toolkit-pass" />
             <button type="submit" className="text-xs text-white/60 hover:text-white underline">Or buy the full Operator Toolkit Pass via Stripe →</button>
           </form>
-          <p className="mt-4 text-xs text-white/40">PaperAirplane is live today as our first public tool.</p>
+          <p className="mt-4 text-xs text-white/40">
+            PaperAirplane is live today as our first public tool. Install the toolkit from your browser — works offline after first load.
+          </p>
         </section>
 
         {/* Tools grid */}
