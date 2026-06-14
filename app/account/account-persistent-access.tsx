@@ -34,7 +34,24 @@ export function AccountClearSavedAccess() {
   );
   const [cleared, setCleared] = useState(false);
 
-  if (!savedCustomerId && !cleared) return null;
+  if (savedCustomerId) {
+    return (
+      <div className="mt-6 rounded-2xl border border-white/10 p-4 bg-zinc-900 text-sm">
+        <p className="text-white/80">Saved access on this device</p>
+        <p className="mt-1 text-xs text-white/50 font-mono break-all">{savedCustomerId}</p>
+        <button
+          type="button"
+          onClick={() => {
+            clearSavedStripeCustomer();
+            setCleared(true);
+          }}
+          className="mt-3 text-xs underline text-white/60 hover:text-white"
+        >
+          Clear saved access on this device
+        </button>
+      </div>
+    );
+  }
 
   if (cleared) {
     return (
@@ -46,20 +63,5 @@ export function AccountClearSavedAccess() {
     );
   }
 
-  return (
-    <div className="mt-6 rounded-2xl border border-white/10 p-4 bg-zinc-900 text-sm">
-      <p className="text-white/80">Saved access on this device</p>
-      <p className="mt-1 text-xs text-white/50 font-mono break-all">{savedCustomerId}</p>
-      <button
-        type="button"
-        onClick={() => {
-          clearSavedStripeCustomer();
-          setCleared(true);
-        }}
-        className="mt-3 text-xs underline text-white/60 hover:text-white"
-      >
-        Clear saved access on this device
-      </button>
-    </div>
-  );
+  return null;
 }

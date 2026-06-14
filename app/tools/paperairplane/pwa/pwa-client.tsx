@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import jsPDF from 'jspdf';
 import {
   DIFFICULTY_DEFAULTS,
@@ -19,6 +19,10 @@ import {
   type ProAccessSource,
   type ProStatusResponse,
 } from '@/lib/persistent-pro-status';
+import {
+  getSavedStripeCustomerSnapshot,
+  subscribeStripeCustomerStorage,
+} from '@/lib/stripe-customer-storage';
 
 const FREE_MAX_SIZE = 16;
 const PRO_MAX_SIZE = 28;
@@ -64,9 +68,18 @@ function generateFromParams(params: GeneratorParams, maxSize: number): MazeResul
   return best;
 }
 
+function useSavedCustomerSnapshot(): string | null {
+  return useSyncExternalStore(
+    subscribeStripeCustomerStorage,
+    getSavedStripeCustomerSnapshot,
+    () => null,
+  );
+}
+
 export default function PaperAirplanePwaClient() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
+  const savedCustomerSnapshot = useSavedCustomerSnapshot();
   const [proStatus, setProStatus] = useState<ProStatus>({
     paperAirplanePro: false,
     livemode: null,
@@ -93,10 +106,12 @@ export default function PaperAirplanePwaClient() {
 
     fetchProStatus(sessionId)
       .then(({ data, source }) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
 
-        const nextMax = data.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
-        setProStatus(data);
+        const nextMax = data?.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
+        setProStatus(
+          data ?? { paperAirplanePro: false, livemode: null, verified: false },
+        );
         setProAccessSource(source);
         setParams((prev) => {
           const updated = clampParams(prev, nextMax);
@@ -114,7 +129,7 @@ export default function PaperAirplanePwaClient() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, savedCustomerSnapshot]);
 
   const effectiveShowSolution = isPro && showSolution;
 
