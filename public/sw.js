@@ -8,13 +8,41 @@ const PRECACHE_URLS = [
   '/offline',
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(SHELL_CACHE)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting()),
+function staticAssetsFromHtml(html) {
+  const assets = new Set();
+  const pattern = /(?:src|href)="(\/_next\/static\/[^"]+)"/g;
+  let match;
+  while ((match = pattern.exec(html)) !== null) {
+    assets.add(match[1]);
+  }
+  return [...assets];
+}
+
+async function precacheShellAndAssets() {
+  const shellCache = await caches.open(SHELL_CACHE);
+  const staticCache = await caches.open(STATIC_CACHE);
+
+  await Promise.all(
+    PRECACHE_URLS.map(async (path) => {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(`Precache failed: ${path}`);
+      await shellCache.put(path, response.clone());
+
+      const html = await response.text();
+      await Promise.all(
+        staticAssetsFromHtml(html).map(async (assetPath) => {
+          const assetResponse = await fetch(assetPath);
+          if (assetResponse.ok) {
+            await staticCache.put(assetPath, assetResponse);
+          }
+        }),
+      );
+    }),
   );
+}
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(precacheShellAndAssets().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -44,6 +72,15 @@ function shellCacheKey(url) {
   return url.pathname + url.search;
 }
 
+function isRscRequest(request) {
+  const url = new URL(request.url);
+  return (
+    request.headers.get('RSC') === '1' ||
+    request.headers.get('Next-Router-Prefetch') === '1' ||
+    url.searchParams.has('_rsc')
+  );
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || !isSameOrigin(request)) return;
@@ -51,12 +88,13 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.pathname.startsWith('/api/') || url.pathname === '/sw.js') return;
 
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate' || isRscRequest(request)) {
     const skipShellCache = url.pathname.startsWith('/account');
+    const isDocumentNavigation = request.mode === 'navigate';
     event.respondWith(
       fetch(request)
         .then(async (response) => {
-          if (response.ok && !skipShellCache) {
+          if (response.ok && !skipShellCache && isDocumentNavigation) {
             const copy = response.clone();
             const cache = await caches.open(SHELL_CACHE);
             await cache.put(shellCacheKey(url), copy);
