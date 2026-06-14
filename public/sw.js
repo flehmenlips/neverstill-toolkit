@@ -51,17 +51,18 @@ self.addEventListener('fetch', (event) => {
     const skipShellCache = url.pathname.startsWith('/account');
     event.respondWith(
       fetch(request)
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok && !skipShellCache) {
             const copy = response.clone();
-            caches.open(SHELL_CACHE).then((cache) => cache.put(request, copy));
+            const cache = await caches.open(SHELL_CACHE);
+            await cache.put(url.pathname, copy);
           }
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(request);
+          const cached = await caches.match(url.pathname, { ignoreVary: true });
           if (cached) return cached;
-          const offline = await caches.match('/offline');
+          const offline = await caches.match('/offline', { ignoreVary: true });
           return offline ?? Response.error();
         }),
     );
@@ -79,10 +80,11 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then(
         (cached) =>
           cached ??
-          fetch(request).then((response) => {
+          fetch(request).then(async (response) => {
             if (response.ok) {
               const copy = response.clone();
-              caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
+              const cache = await caches.open(STATIC_CACHE);
+              await cache.put(request, copy);
             }
             return response;
           }),
