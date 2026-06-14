@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { getStripeClient, getStripeWebhookSecret } from '@/lib/stripe';
-import { purchaseRecordFromSession } from '@/lib/stripe-purchases';
+import {
+  getPurchaseSkipReason,
+  purchaseRecordFromSession,
+} from '@/lib/stripe-purchases';
 
 export const runtime = 'nodejs';
 
@@ -26,7 +29,10 @@ export async function POST(request: Request) {
 
   switch (event.type) {
     case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const eventSession = event.data.object as Stripe.Checkout.Session;
+      const session = await stripe.checkout.sessions.retrieve(eventSession.id, {
+        expand: ['line_items', 'payment_intent.latest_charge'],
+      });
       const purchase = purchaseRecordFromSession(session, event.livemode);
 
       console.log(
@@ -52,12 +58,7 @@ export async function POST(request: Request) {
           }),
         );
       } else {
-        const reason =
-          session.payment_status !== 'paid'
-            ? 'unpaid'
-            : session.metadata?.product
-              ? 'unknown_product'
-              : 'unknown_product_or_unpaid';
+        const reason = getPurchaseSkipReason(session);
 
         console.warn(
           '[stripe webhook] purchase_record_skipped',

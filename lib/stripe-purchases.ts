@@ -28,6 +28,8 @@ export type PurchaserAccess = {
   livemode: boolean | null;
   customerId: string | null;
   customerEmail: string | null;
+  /** True when the provided checkout session is paid, not refunded, and grants access. */
+  sessionGrantsAccess: boolean;
 };
 
 export const PRODUCT_LABELS: Record<CheckoutProduct, string> = {
@@ -84,6 +86,14 @@ export function sessionGrantsAccess(session: Stripe.Checkout.Session): boolean {
   if (session.payment_status !== 'paid') return false;
   if (isSessionRefunded(session)) return false;
   return resolveProductFromSession(session) !== null;
+}
+
+export function getPurchaseSkipReason(session: Stripe.Checkout.Session): string {
+  if (session.payment_status !== 'paid') return 'unpaid';
+  if (isSessionRefunded(session)) return 'refunded';
+  if (resolveProductFromSession(session)) return 'unknown';
+  if (session.metadata?.product) return 'unknown_product';
+  return 'unknown_product_or_unpaid';
 }
 
 export function purchaseRecordFromSession(
@@ -147,6 +157,7 @@ export async function getPurchaserAccess(sessionId?: string): Promise<PurchaserA
     livemode: null,
     customerId: null,
     customerEmail: null,
+    sessionGrantsAccess: false,
   };
 
   if (!sessionId?.startsWith('cs_')) {
@@ -162,20 +173,21 @@ export async function getPurchaserAccess(sessionId?: string): Promise<PurchaserA
     result.livemode = session.livemode;
     result.customerId = resolveCustomerId(session);
     result.customerEmail = session.customer_details?.email ?? session.customer_email ?? null;
+    result.sessionGrantsAccess = sessionGrantsAccess(session);
 
-    if (sessionGrantsAccess(session)) {
+    if (result.sessionGrantsAccess) {
       const sessionRecord = purchaseRecordFromSession(session, session.livemode);
       if (sessionRecord) {
         result.purchases.push(sessionRecord);
         result.owned = mergeOwnedProducts(result.owned, ownedFromProduct(sessionRecord.product));
       }
-    }
 
-    if (result.customerId) {
-      const customerAccess = await getPurchaserAccessForCustomer(result.customerId);
-      result.owned = mergeOwnedProducts(result.owned, customerAccess.owned);
-      result.purchases = mergePurchaseRecords(result.purchases, customerAccess.purchases);
-      if (result.livemode === null) result.livemode = customerAccess.livemode;
+      if (result.customerId) {
+        const customerAccess = await getPurchaserAccessForCustomer(result.customerId);
+        result.owned = mergeOwnedProducts(result.owned, customerAccess.owned);
+        result.purchases = mergePurchaseRecords(result.purchases, customerAccess.purchases);
+        if (result.livemode === null) result.livemode = customerAccess.livemode;
+      }
     }
   } catch {
     return result;
@@ -192,6 +204,7 @@ export async function getPurchaserAccessForCustomer(customerId: string): Promise
     livemode: null,
     customerId,
     customerEmail: null,
+    sessionGrantsAccess: false,
   };
 
   try {

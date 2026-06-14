@@ -66,7 +66,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
           Manage toolkit access, downloads, and Stripe purchases in one place.
         </p>
 
-        {session_id && hasAnyOwned && (
+        {access.sessionGrantsAccess && (
           <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 p-4 text-sm text-emerald-100">
             <p className="font-medium">Thank you — payment received.</p>
             <p className="mt-1 text-emerald-100/80">
