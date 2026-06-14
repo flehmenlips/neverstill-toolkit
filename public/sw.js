@@ -40,6 +40,10 @@ function isSameOrigin(request) {
   }
 }
 
+function shellCacheKey(url) {
+  return url.pathname + url.search;
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || !isSameOrigin(request)) return;
@@ -55,12 +59,12 @@ self.addEventListener('fetch', (event) => {
           if (response.ok && !skipShellCache) {
             const copy = response.clone();
             const cache = await caches.open(SHELL_CACHE);
-            await cache.put(url.pathname, copy);
+            await cache.put(shellCacheKey(url), copy);
           }
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(url.pathname, { ignoreVary: true });
+          const cached = await caches.match(shellCacheKey(url), { ignoreVary: true });
           if (cached) return cached;
           const offline = await caches.match('/offline', { ignoreVary: true });
           return offline ?? Response.error();
