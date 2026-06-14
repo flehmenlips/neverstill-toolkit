@@ -67,6 +67,7 @@ export function PaperAirplaneProBadge({
 }: Pick<PaperAirplaneProClientProps, 'sessionIsPro' | 'sessionId'>) {
   const [localStoragePro, setLocalStoragePro] = useState(false);
   const savedCustomerSnapshot = useSavedCustomerSnapshot();
+  const canHavePersistedPro = Boolean(sessionId?.startsWith('cs_') || savedCustomerSnapshot);
 
   useEffect(() => {
     if (sessionIsPro) return;
@@ -83,7 +84,7 @@ export function PaperAirplaneProBadge({
     };
   }, [sessionIsPro, sessionId, savedCustomerSnapshot]);
 
-  if (!sessionIsPro && !localStoragePro) return null;
+  if (!sessionIsPro && !(canHavePersistedPro && localStoragePro)) return null;
 
   return (
     <span className="rounded-full border border-emerald-500/40 bg-emerald-950/50 px-3 py-1 text-xs font-medium uppercase tracking-widest text-emerald-200">
@@ -100,6 +101,7 @@ export function PaperAirplaneProAccessBanner({
   const [localStoragePro, setLocalStoragePro] = useState(false);
   const [accessSource, setAccessSource] = useState<ProAccessSource>(null);
   const savedCustomerSnapshot = useSavedCustomerSnapshot();
+  const canHavePersistedPro = Boolean(sessionId?.startsWith('cs_') || savedCustomerSnapshot);
 
   useEffect(() => {
     if (sessionIsPro) return;
@@ -116,9 +118,9 @@ export function PaperAirplaneProAccessBanner({
     };
   }, [sessionIsPro, sessionId, savedCustomerSnapshot]);
 
-  const isPro = sessionIsPro || localStoragePro;
+  const isPro = sessionIsPro || (canHavePersistedPro && localStoragePro);
   const displaySource: ProAccessSource =
-    sessionIsPro && sessionId ? 'session' : accessSource;
+    sessionIsPro && sessionId ? 'session' : canHavePersistedPro ? accessSource : null;
 
   if (!isPro) return null;
 

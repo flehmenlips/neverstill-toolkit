@@ -98,7 +98,8 @@ export default function PaperAirplanePwaClient() {
   const [mazeResult, setMazeResult] = useState<MazeResult | null>(null);
   const [seedInput, setSeedInput] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isPro = proStatus.paperAirplanePro;
+  const canHavePersistedPro = Boolean(sessionId?.startsWith('cs_') || savedCustomerSnapshot);
+  const isPro = canHavePersistedPro && proStatus.paperAirplanePro;
   const maxSize = isPro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
 
   useEffect(() => {
@@ -145,7 +146,7 @@ export default function PaperAirplanePwaClient() {
       setParams(updated);
       setMazeResult(generateFromParams(updated, maxSize));
     }
-  }, [maxSize]);
+  }, [maxSize, setMazeResult, setParams]);
 
   const setDifficulty = useCallback(
     (difficulty: Difficulty) => {
@@ -165,7 +166,7 @@ export default function PaperAirplanePwaClient() {
     const nextSeed = randomSeed();
     setSeedInput(String(nextSeed));
     applyParams((prev) => ({ ...prev, seed: nextSeed }));
-  }, [applyParams]);
+  }, [applyParams, setSeedInput]);
 
   const applySeedFromInput = useCallback(() => {
     const parsed = Number.parseInt(seedInput, 10);
