@@ -3,6 +3,10 @@ import {
   getPurchaserAccess,
   hasPaperAirplanePro,
 } from '@/lib/stripe-purchases';
+import {
+  PaperAirplaneProAccessBanner,
+  PaperAirplaneProBadge,
+} from './paperairplane-pro-client';
 
 type PaperAirplanePageProps = {
   searchParams: Promise<{ session_id?: string }>;
@@ -26,28 +30,17 @@ export default async function PaperAirplanePage({ searchParams }: PaperAirplaneP
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-5xl font-semibold tracking-tighter">PaperAirplane</h1>
-              {isPro && (
-                <span className="rounded-full border border-emerald-500/40 bg-emerald-950/50 px-3 py-1 text-xs font-medium uppercase tracking-widest text-emerald-200">
-                  Pro
-                </span>
-              )}
+              <PaperAirplaneProBadge sessionIsPro={isPro} sessionId={session_id} />
             </div>
             <p className="text-white/60 mt-1">Personalized printable worksheets for kids 1–8+</p>
           </div>
         </div>
 
-        {isPro && (
-          <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-950/30 p-4 text-sm text-emerald-100">
-            <p className="font-medium">Pro access granted</p>
-            <p className="mt-1 text-emerald-100/80">
-              Your hosted PWA unlocks larger maze sizes and the solution-path overlay. Open the PWA with
-              your purchase linked below.
-            </p>
-            <Link href={pwaHref} className="mt-3 inline-block text-xs underline hover:text-emerald-50">
-              Open Pro-enabled PWA →
-            </Link>
-          </div>
-        )}
+        <PaperAirplaneProAccessBanner
+          sessionIsPro={isPro}
+          sessionId={session_id}
+          pwaHref={pwaHref}
+        />
 
         <div className="mt-8 grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2 space-y-6 text-lg text-white/80">

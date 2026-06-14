@@ -126,7 +126,7 @@ Read this section **once per session** before you touch any backlog item.
 - **Key pages live**: Hub, PaperAirplane marketing + PWA, FarmForge, PrepBoard, ChefScale (stubs with CTAs), /account (success + portal stub), /api/checkout, basic Stripe webhook.
 - **Deploy docs**: See `docs/DEPLOY.md` (DNS, env vars, webhook registration steps, customer portal setup).
 - **Monetization live**: Gumroad (https://neverstill.gumroad.com/l/mvwhj) + direct Stripe via hub forms.
-- **Gaps still open** (see backlog): hosted depth for the other three tools, persistent purchase storage beyond Stripe lookup (future).
+- **Gaps still open** (see backlog): hosted depth for the other three tools, offline Pro cache (optional follow-up to NT-017).
 - **Mobile path**: Planned via kitchensync/mobile/mobile Expo workflow (see NT-013 and Vision section above). No native builds or store listings for toolkit tools yet; web/PWA is the current distribution. FarmForge integration is already happening in the broader kitchensync platform (web + mobile ledgers).
 
 The initial "hub scaffold + PaperAirplane PWA spike" work (PA-005 in sibling + toolkit PR#1) is complete and merged. Deploy is complete (per user confirmation + `docs/DEPLOY.md`).
@@ -189,7 +189,7 @@ Rough order-of-magnitude. Signals for planning, not hard commitments.
 
 ## ID counter
 
-**Next available ID: `NT-017`**
+**Next available ID: `NT-018`**
 
 (NT-001 initial deploy/Stripe; NT-002 PWA; NT-013 mobile strategy. Tracked here for history.)
 
@@ -207,6 +207,7 @@ Convenience view only. Source of truth is the metadata on each item.
 | NT-002 | Enhance PaperAirplane PWA with production maze generators | done | PR #6 merged 2026-06 |
 | NT-004 | PWA manifest + service worker (installable, offline) | done | PR #10 merged 2026-06-14 |
 | NT-005 | Expand webhook fulfillment and account Pro unlocks | done | PR #8 merged 2026-06-13 |
+| NT-017 | Persistent Pro unlock (localStorage + customer_id) | done | PR pending 2026-06-14 |
 
 ---
 
@@ -308,6 +309,21 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 - [x] Docs updated (DEPLOY.md, this backlog, marketing pages).
 
 **Hints.** Start simple (no full user DB). Use the verified session on /account + customer ID from Stripe for a "recent purchases" view. For real persistence later, a lightweight KV or the existing Supabase patterns from other projects can be added.
+
+### NT-017 — Persistent Pro unlock (localStorage + customer_id re-verify)
+
+`status: done` `type: feature` `priority: P1` `effort: S` `areas: app/api/pro-status/, app/account/, app/tools/paperairplane/, lib/stripe-customer-storage.ts, lib/persistent-pro-status.ts, docs/PRODUCT_BACKLOG.md` `added: 2026-06-14`
+
+**Why.** After Stripe checkout, Pro access was only available while `session_id` remained in the URL. Normal return visits to the hosted PWA lost Pro until the purchaser dug up the checkout link again. Device-scoped localStorage plus server-side re-verification via Stripe customer ID closes that gap without a user database.
+
+**Acceptance criteria.**
+- [x] After successful purchase verification on `/account`, store Stripe `customerId` in localStorage (`neverstill-stripe-customer` as `{ customerId, savedAt }`).
+- [x] `/account` exposes "Clear saved access on this device."
+- [x] `GET /api/pro-status` accepts `customer_id=cus_...` and calls `getPurchaserAccessForCustomer` with format validation; never trusts localStorage alone.
+- [x] PaperAirplane PWA prefers URL `session_id`, else localStorage customer → `/api/pro-status?customer_id=...`; saves customerId after session verify; subtle banner for saved vs session source.
+- [x] PaperAirplane marketing page uses the same persistent Pro pattern for badge/banner parity.
+- [x] `npm run build && npm run lint` pass.
+- [ ] Optional follow-up: offline Pro cache (not in MVP slice).
 
 ### NT-006 — Content & SEO flywheel — expand "From the Farm" section and tool-related pages with real stories/templates from the farm sites
 
@@ -440,6 +456,7 @@ Items here are for history. Do not pick up.
 - **NT-002** — Production maze generators in hosted PaperAirplane PWA (`merged: 2026-06-13`). PR #6 — `lib/paperairplane/maze-logic.ts`, difficulty presets, braid, BFS validation, seeded exports, Pro solution overlay.
 - **NT-005** — Expand webhook fulfillment and account Pro unlocks (`merged: 2026-06-13`). PR #8 — purchase_record webhook logging, /account Pro status, /api/pro-status, PaperAirplane PWA 28×28 + solution path gates.
 - **NT-004** — PWA manifest, service worker, and offline shell (`merged: 2026-06-14`). PR #10 — `app/manifest.ts`, `public/sw.js`, `PwaRegister`, precached hub + PaperAirplane routes, `/offline` fallback.
+- **NT-017** — Persistent Pro unlock via localStorage + `customer_id` re-verify (`merged: 2026-06-14`). `/api/pro-status?customer_id=`, account save/clear, PWA + marketing parity.
 - Initial hub scaffold + PaperAirplane PWA spike (PA-005 context) + Bugbot fixes + first deploy to neverstill.dev + live Stripe prices (largely complete before/around the creation of this doc; tracked as the foundation for NT-001 onward). See GitHub PR history for the toolkit repo and sibling spikes/PA-005 results.
 
 ---

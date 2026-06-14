@@ -14,15 +14,16 @@ import {
   type MazeResult,
 } from '@/lib/paperairplane/maze-logic';
 import { drawMazeToCanvas, type Theme } from '@/lib/paperairplane/maze-render';
+import {
+  fetchProStatus,
+  type ProAccessSource,
+  type ProStatusResponse,
+} from '@/lib/persistent-pro-status';
 
 const FREE_MAX_SIZE = 16;
 const PRO_MAX_SIZE = 28;
 
-type ProStatus = {
-  paperAirplanePro: boolean;
-  livemode: boolean | null;
-  verified: boolean;
-};
+type ProStatus = ProStatusResponse;
 
 type GeneratorParams = {
   difficulty: Difficulty;
@@ -71,6 +72,7 @@ export default function PaperAirplanePwaClient() {
     livemode: null,
     verified: false,
   });
+  const [proAccessSource, setProAccessSource] = useState<ProAccessSource>(null);
   const [params, setParams] = useState<GeneratorParams>({
     difficulty: 'medium',
     width: DIFFICULTY_DEFAULTS.medium.width,
@@ -87,25 +89,25 @@ export default function PaperAirplanePwaClient() {
   const maxSize = isPro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
 
   useEffect(() => {
-    const query = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : '';
     let cancelled = false;
 
-    fetch(`/api/pro-status${query}`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: ProStatus | null) => {
-        if (!cancelled && data) {
-          const nextMax = data.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
-          setProStatus(data);
-          setParams((prev) => {
-            const updated = clampParams(prev, nextMax);
-            setMazeResult(generateFromParams(updated, nextMax));
-            return updated;
-          });
-        }
+    fetchProStatus(sessionId)
+      .then(({ data, source }) => {
+        if (cancelled || !data) return;
+
+        const nextMax = data.paperAirplanePro ? PRO_MAX_SIZE : FREE_MAX_SIZE;
+        setProStatus(data);
+        setProAccessSource(source);
+        setParams((prev) => {
+          const updated = clampParams(prev, nextMax);
+          setMazeResult(generateFromParams(updated, nextMax));
+          return updated;
+        });
       })
       .catch(() => {
         if (!cancelled) {
           setProStatus({ paperAirplanePro: false, livemode: null, verified: false });
+          setProAccessSource(null);
         }
       });
 
@@ -277,6 +279,16 @@ export default function PaperAirplanePwaClient() {
           <div className="mt-4 text-sm text-emerald-100 bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-xl">
             Pro access active — larger sizes (up to {PRO_MAX_SIZE}×{PRO_MAX_SIZE}) and solution-path overlay
             unlocked.
+            {proAccessSource === 'saved-customer' && (
+              <span className="block mt-1 text-xs text-emerald-100/70">
+                Restored from saved access on this device — verified server-side with Stripe.
+              </span>
+            )}
+            {proAccessSource === 'session' && (
+              <span className="block mt-1 text-xs text-emerald-100/70">
+                Linked from checkout session — access saved on this device for return visits.
+              </span>
+            )}
             {proStatus.livemode === false && (
               <span className="block mt-1 text-xs text-emerald-100/70">Stripe test mode purchase</span>
             )}
@@ -287,8 +299,11 @@ export default function PaperAirplanePwaClient() {
             <Link href="/tools/paperairplane" className="underline hover:text-white">
               Buy PaperAirplane Pro
             </Link>{' '}
-            for larger sizes and solution-path overlay. After checkout, return via /account with your session
-            linked.
+            for larger sizes and solution-path overlay. After checkout, visit{' '}
+            <Link href="/account" className="underline hover:text-white">
+              /account
+            </Link>{' '}
+            once to save Pro access on this device.
           </div>
         )}
 
