@@ -126,7 +126,7 @@ Read this section **once per session** before you touch any backlog item.
 - **Key pages live**: Hub, PaperAirplane marketing + PWA, FarmForge, PrepBoard, ChefScale (stubs with CTAs), /account (success + portal stub), /api/checkout, basic Stripe webhook.
 - **Deploy docs**: See `docs/DEPLOY.md` (DNS, env vars, webhook registration steps, customer portal setup).
 - **Monetization live**: Gumroad (https://neverstill.gumroad.com/l/mvwhj) + direct Stripe via hub forms.
-- **Gaps still open** (see backlog): PWA enhancements (NT-002), hosted depth for the other three tools, installability polish (NT-004), fulfillment automation beyond logging (NT-005).
+- **Gaps still open** (see backlog): PWA enhancements (NT-002), hosted depth for the other three tools, installability polish (NT-004), persistent purchase storage beyond Stripe lookup (future).
 - **Mobile path**: Planned via kitchensync/mobile/mobile Expo workflow (see NT-013 and Vision section above). No native builds or store listings for toolkit tools yet; web/PWA is the current distribution. FarmForge integration is already happening in the broader kitchensync platform (web + mobile ledgers).
 
 The initial "hub scaffold + PaperAirplane PWA spike" work (PA-005 in sibling + toolkit PR#1) is complete and merged. Deploy is complete (per user confirmation + `docs/DEPLOY.md`).
@@ -205,7 +205,7 @@ Convenience view only. Source of truth is the metadata on each item.
 |----|-------|--------|-------|
 | NT-001 | Finalize Stripe ops (webhook, portal, basic fulfillment) | done | Verified prod via Vercel + Stripe MCP/CLI, June 2026 |
 | NT-002 | Enhance PaperAirplane PWA with production maze generators | in-progress | Branch feat/NT-002-pwa-maze-generators |
-| NT-005 | Expand webhook fulfillment and account Pro unlocks | in-progress | Branch feat/NT-005-stripe-fulfillment |
+| NT-005 | Expand webhook fulfillment and account Pro unlocks | done | PR #8 merged 2026-06-13 |
 
 ---
 
@@ -295,16 +295,16 @@ Items grouped by **priority**, then **status** (`ready` before `idea`), then ID.
 
 ### NT-005 — Expand webhook fulfillment and account page to deliver real Pro value / unlocks
 
-`status: in-progress` `type: feature` `priority: P2` `effort: M` `areas: app/api/webhooks/stripe/, app/account/, lib/, possibly a simple license or flag system` `added: 2026-06`
+`status: done` `merged: 2026-06-13` `type: feature` `priority: P2` `effort: M` `areas: app/api/webhooks/stripe/, app/account/, lib/, possibly a simple license or flag system` `added: 2026-06`
 
 **Why.** "Future: download links for Pro unlocks and license keys" appears in the account page and DEPLOY.md. For PaperAirplane Pro (and future Pro purchases), purchasers should get something tangible beyond the Stripe receipt and portal — e.g. a note that their Gumroad packs include lifetime updates, a displayed "Pro access granted" state for the hosted PWA features, or actual license keys / download links for digital goods. This turns one-time Stripe purchases into perceived ongoing value and reduces support load.
 
 **Acceptance criteria.**
-- [ ] On `checkout.session.completed`, the webhook does more than log (e.g. record the purchase keyed by customer or session metadata.product).
-- [ ] /account shows per-product status for the current purchaser (at minimum for the session that just succeeded; later can be made persistent via customer ID lookup).
-- [ ] At least one concrete unlock: e.g. a "Pro" badge or note on the PaperAirplane page for verified purchasers, or a link to a private Gumroad-style download, or display of a generated license key.
-- [ ] Graceful handling for test vs live mode purchases.
-- [ ] Docs updated (DEPLOY.md, this backlog, marketing pages).
+- [x] On `checkout.session.completed`, the webhook does more than log (e.g. record the purchase keyed by customer or session metadata.product).
+- [x] /account shows per-product status for the current purchaser (at minimum for the session that just succeeded; later can be made persistent via customer ID lookup).
+- [x] At least one concrete unlock: e.g. a "Pro" badge or note on the PaperAirplane page for verified purchasers, or a link to a private Gumroad-style download, or display of a generated license key.
+- [x] Graceful handling for test vs live mode purchases.
+- [x] Docs updated (DEPLOY.md, this backlog, marketing pages).
 
 **Hints.** Start simple (no full user DB). Use the verified session on /account + customer ID from Stripe for a "recent purchases" view. For real persistence later, a lightweight KV or the existing Supabase patterns from other projects can be added.
 
@@ -436,6 +436,7 @@ The ACs below are written to force explicit evaluation of these options during t
 Items here are for history. Do not pick up.
 
 - **NT-001** — Finalize live Stripe webhook registration, customer portal, and basic fulfillment path (`merged: 2026-06-13`). See `docs/DEPLOY.md` checklist and PR for verification commit.
+- **NT-005** — Expand webhook fulfillment and account Pro unlocks (`merged: 2026-06-13`). PR #8 — purchase_record webhook logging, /account Pro status, /api/pro-status, PaperAirplane PWA 28×28 + solution path gates.
 - Initial hub scaffold + PaperAirplane PWA spike (PA-005 context) + Bugbot fixes + first deploy to neverstill.dev + live Stripe prices (largely complete before/around the creation of this doc; tracked as the foundation for NT-001 onward). See GitHub PR history for the toolkit repo and sibling spikes/PA-005 results.
 
 ---
