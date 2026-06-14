@@ -72,15 +72,6 @@ function shellCacheKey(url) {
   return url.pathname + url.search;
 }
 
-function isRscRequest(request) {
-  const url = new URL(request.url);
-  return (
-    request.headers.get('RSC') === '1' ||
-    request.headers.get('Next-Router-Prefetch') === '1' ||
-    url.searchParams.has('_rsc')
-  );
-}
-
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET' || !isSameOrigin(request)) return;
@@ -88,13 +79,12 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.pathname.startsWith('/api/') || url.pathname === '/sw.js') return;
 
-  if (request.mode === 'navigate' || isRscRequest(request)) {
+  if (request.mode === 'navigate') {
     const skipShellCache = url.pathname.startsWith('/account');
-    const isDocumentNavigation = request.mode === 'navigate';
     event.respondWith(
       fetch(request)
         .then(async (response) => {
-          if (response.ok && !skipShellCache && isDocumentNavigation) {
+          if (response.ok && !skipShellCache) {
             const copy = response.clone();
             const cache = await caches.open(SHELL_CACHE);
             await cache.put(shellCacheKey(url), copy);
