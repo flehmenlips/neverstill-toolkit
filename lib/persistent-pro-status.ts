@@ -37,27 +37,47 @@ export function resolveProStatusQuery(sessionId?: string | null): ResolvedProQue
   return null;
 }
 
+async function requestProStatus(
+  query: string,
+  source: Exclude<ProAccessSource, null>,
+): Promise<{ data: ProStatusResponse | null; source: ProAccessSource }> {
+  const res = await fetch(`/api/pro-status${query}`);
+  const data: ProStatusResponse | null = res.ok ? await res.json() : null;
+
+  return {
+    data,
+    source: data?.paperAirplanePro ? source : null,
+  };
+}
+
 export async function fetchProStatus(sessionId?: string | null): Promise<{
   data: ProStatusResponse | null;
   source: ProAccessSource;
 }> {
-  const resolved = resolveProStatusQuery(sessionId);
-  if (!resolved) {
-    return { data: null, source: null };
-  }
-
   try {
-    const res = await fetch(`/api/pro-status${resolved.query}`);
-    const data: ProStatusResponse | null = res.ok ? await res.json() : null;
+    if (sessionId?.startsWith('cs_')) {
+      const sessionResult = await requestProStatus(
+        `?session_id=${encodeURIComponent(sessionId)}`,
+        'session',
+      );
 
-    if (data?.paperAirplanePro && resolved.source === 'session' && data.customerId) {
-      saveStripeCustomer(data.customerId);
+      if (sessionResult.data?.paperAirplanePro) {
+        if (sessionResult.data.customerId) {
+          saveStripeCustomer(sessionResult.data.customerId);
+        }
+        return sessionResult;
+      }
     }
 
-    return {
-      data,
-      source: data?.paperAirplanePro ? resolved.source : null,
-    };
+    const saved = getSavedStripeCustomer();
+    if (saved) {
+      return requestProStatus(
+        `?customer_id=${encodeURIComponent(saved.customerId)}`,
+        'saved-customer',
+      );
+    }
+
+    return { data: null, source: null };
   } catch {
     return { data: null, source: null };
   }

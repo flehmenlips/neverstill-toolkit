@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   clearSavedStripeCustomer,
-  getSavedStripeCustomer,
+  getSavedStripeCustomerSnapshot,
   saveStripeCustomer,
+  subscribeStripeCustomerStorage,
 } from '@/lib/stripe-customer-storage';
 
 type AccountPersistentAccessProps = {
@@ -26,12 +27,24 @@ export function AccountSaveCustomerAccess({
 }
 
 export function AccountClearSavedAccess() {
-  const [savedCustomerId, setSavedCustomerId] = useState(
-    () => getSavedStripeCustomer()?.customerId ?? null,
+  const savedCustomerId = useSyncExternalStore(
+    subscribeStripeCustomerStorage,
+    getSavedStripeCustomerSnapshot,
+    () => null,
   );
   const [cleared, setCleared] = useState(false);
 
-  if (!savedCustomerId) return null;
+  if (!savedCustomerId && !cleared) return null;
+
+  if (cleared) {
+    return (
+      <div className="mt-6 rounded-2xl border border-white/10 p-4 bg-zinc-900 text-sm">
+        <p className="text-xs text-emerald-200/80">
+          Cleared. Re-open a tool from /account after checkout to save access again.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 rounded-2xl border border-white/10 p-4 bg-zinc-900 text-sm">
@@ -41,18 +54,12 @@ export function AccountClearSavedAccess() {
         type="button"
         onClick={() => {
           clearSavedStripeCustomer();
-          setSavedCustomerId(null);
           setCleared(true);
         }}
         className="mt-3 text-xs underline text-white/60 hover:text-white"
       >
         Clear saved access on this device
       </button>
-      {cleared && (
-        <p className="mt-2 text-xs text-emerald-200/80">
-          Cleared. Re-open a tool from /account after checkout to save access again.
-        </p>
-      )}
     </div>
   );
 }

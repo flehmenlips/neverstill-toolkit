@@ -13,6 +13,36 @@ type PaperAirplaneProClientProps = {
   pwaHref: string;
 };
 
+type CachedProStatus = {
+  isPro: boolean;
+  source: ProAccessSource;
+};
+
+const proStatusRequests = new Map<string, Promise<CachedProStatus>>();
+
+function loadPaperAirplaneProStatus(
+  sessionIsPro: boolean,
+  sessionId?: string,
+): Promise<CachedProStatus> {
+  if (sessionIsPro) {
+    return Promise.resolve({
+      isPro: true,
+      source: sessionId ? 'session' : null,
+    });
+  }
+
+  const cacheKey = sessionId ?? '';
+  const cached = proStatusRequests.get(cacheKey);
+  if (cached) return cached;
+
+  const request = fetchProStatus(sessionId).then(({ data, source }) => ({
+    isPro: Boolean(data?.paperAirplanePro),
+    source: data?.paperAirplanePro ? source : null,
+  }));
+  proStatusRequests.set(cacheKey, request);
+  return request;
+}
+
 export function PaperAirplaneProBadge({
   sessionIsPro,
   sessionId,
@@ -23,8 +53,8 @@ export function PaperAirplaneProBadge({
     if (sessionIsPro) return;
 
     let cancelled = false;
-    fetchProStatus(sessionId).then(({ data }) => {
-      if (!cancelled && data?.paperAirplanePro) {
+    loadPaperAirplaneProStatus(sessionIsPro, sessionId).then(({ isPro }) => {
+      if (!cancelled && isPro) {
         setLocalStoragePro(true);
       }
     });
@@ -55,8 +85,8 @@ export function PaperAirplaneProAccessBanner({
     if (sessionIsPro) return;
 
     let cancelled = false;
-    fetchProStatus(sessionId).then(({ data, source }) => {
-      if (cancelled || !data?.paperAirplanePro) return;
+    loadPaperAirplaneProStatus(sessionIsPro, sessionId).then(({ isPro, source }) => {
+      if (cancelled || !isPro) return;
       setLocalStoragePro(true);
       setAccessSource(source);
     });
