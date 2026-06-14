@@ -181,13 +181,13 @@ export async function getPurchaserAccess(sessionId?: string): Promise<PurchaserA
         result.purchases.push(sessionRecord);
         result.owned = mergeOwnedProducts(result.owned, ownedFromProduct(sessionRecord.product));
       }
+    }
 
-      if (result.customerId) {
-        const customerAccess = await getPurchaserAccessForCustomer(result.customerId);
-        result.owned = mergeOwnedProducts(result.owned, customerAccess.owned);
-        result.purchases = mergePurchaseRecords(result.purchases, customerAccess.purchases);
-        if (result.livemode === null) result.livemode = customerAccess.livemode;
-      }
+    if (result.customerId) {
+      const customerAccess = await getPurchaserAccessForCustomer(result.customerId);
+      result.owned = mergeOwnedProducts(result.owned, customerAccess.owned);
+      result.purchases = mergePurchaseRecords(result.purchases, customerAccess.purchases);
+      if (result.livemode === null) result.livemode = customerAccess.livemode;
     }
   } catch {
     return result;
